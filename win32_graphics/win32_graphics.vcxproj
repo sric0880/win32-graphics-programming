@@ -78,23 +78,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base.h" />
-    <ClInclude Include="Geometry.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Testcase.h" />
-    <ClInclude Include="Transform.h" />
     <ClInclude Include="win32_graphics.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Base.cpp" />
-    <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Testcase.cpp" />
-    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="win32_graphics.cpp" />
   </ItemGroup>
   <ItemGroup>

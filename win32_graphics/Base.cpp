@@ -11,19 +11,23 @@ void Vector::normalize()
 	float len = length();
 	x/=len; y/=len; z/=len;
 }
-Vector Vector::operator+ (const Vector& vec)
+Vector Vector::operator+ (const Vector& vec) const
 {
 	return Vector ( x + vec.x, y + vec.y, z + vec.z, w + vec.w );
 }
-Vector Vector::operator- (const Vector& vec)
+Vector Vector::operator- (const Vector& vec) const
 {
 	return Vector ( x - vec.x, y - vec.y, z - vec.z, w - vec.w );
 }
-Vector Vector::dotProduct (const Vector& vec)
+Vector Vector::operator* (float scale) const
+{
+	return Vector (x*scale, y*scale, z*scale);
+}
+Vector Vector::dotProduct (const Vector& vec) const
 {
 	return Vector ( x * vec.x, y * vec.y, z * vec.z, w * vec.w );
 }
-Vector Vector::crossProduct(const Vector& vec)
+Vector Vector::crossProduct(const Vector& vec) const
 {
 	return Vector(y*vec.z - z*vec.y, z*vec.x - x*vec.z, x*vec.y - y*vec.x);
 }
@@ -126,6 +130,10 @@ Vector Matrix::operator* (const Vector& vec) const
 	vector.y = m[0].y*vec.x + m[1].y*vec.y + m[2].y*vec.z + m[3].y*vec.w;
 	vector.z = m[0].z*vec.x + m[1].z*vec.y + m[2].z*vec.z + m[3].z*vec.w;
 	vector.w = m[0].w*vec.x + m[1].w*vec.y + m[2].w*vec.z + m[3].w*vec.w;
+	vector.x /= vector.w;
+	vector.y /= vector.w;
+	vector.z /= vector.w;
+	vector.w = 1;
 	return vector;
 }
 Matrix Matrix::operator* (float x) const
@@ -152,8 +160,18 @@ Matrix Matrix::operator/ (float x) const
 	}
 	return matrix;
 }
+//Matrix Matrix::operator~ () const
+//{
+//	Matrix matrix;
+//
+//	return matrix;
+//}
 
 Matrix operator* (float x, const Matrix& mat)
 {
 	return mat*x;
+}
+Vector operator* (float x, const Vector& vert)
+{
+	return vert*x;
 }

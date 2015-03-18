@@ -7,21 +7,25 @@ struct Vector
 	float z;
 	float w;
 
-	Vector(){}
+	Vector():x(0),y(0),z(0),w(1){}
 	Vector(float _x, float _y, float _z, float _w = 1):x(_x), y(_y), z(_z), w(_w){}
 	float length();
 	void normalize();
-	Vector dotProduct (const Vector& vec);
-	Vector crossProduct(const Vector& vec);
-	Vector operator+ (const Vector& vec);
-	Vector operator- (const Vector& vec);
-	//TODO: reverse a verctor
+	Vector dotProduct (const Vector& vec) const;
+	Vector crossProduct(const Vector& vec) const;
+	Vector operator+ (const Vector& vec) const;
+	Vector operator- (const Vector& vec) const;
+	Vector operator* (float scale) const;
 };
 
 struct Matrix
 {
 	Vector m[4];
-
+	Matrix() // identity matrix
+	{
+		identityMatrix(*this);
+	}
+	
 	Matrix & operator+= (const Matrix& mat);
 	Matrix & operator-= (const Matrix& mat);
 	Matrix & operator*= (const Matrix& mat);
@@ -33,10 +37,19 @@ struct Matrix
 	Vector operator* (const Vector& vec) const;
 	Matrix operator* (float x) const;
 	Matrix operator/ (float x) const;
-	//TODO: reverse a matrix
+	//Matrix operator~ () const;
+
+	static void identityMatrix(Matrix& m)
+	{
+		m.m[0].x = 1; m.m[0].y = 0; m.m[0].z = 0; m.m[0].w = 0;
+		m.m[1].x = 0; m.m[1].y = 1; m.m[1].z = 0; m.m[1].w = 0;
+		m.m[0].x = 0; m.m[0].y = 0; m.m[0].z = 1; m.m[0].w = 0;
+		m.m[0].x = 0; m.m[0].y = 0; m.m[0].z = 0; m.m[0].w = 1;
+	}
 };
 
 Matrix operator* (float x, const Matrix& mat);
+Vector operator* (float x, const Vector& vert);
 //Matrix operator* (const Vector& vec, const Matrix& mat); // undefined
 
 struct Position
@@ -76,13 +89,6 @@ struct Fragment
 	Vector normal;
 	TexCoord texCoord;
 	float depth;
-};
-
-struct Camera
-{
-	Position pos;
-	Vector up;
-	Vector orientation;
 };
 
 //struct Triangle
