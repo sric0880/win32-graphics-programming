@@ -6,6 +6,7 @@ Camera::Camera(void):
 	isOrthProjection(false),
 	isProjectOrthDirty(true),
 	isProjectPerspDirty(true),
+	isViewportDirty(true),
 	isViewDirty(false),
 	orthBoxSize(10.0f),
 	fieldOfView(60.0f),
@@ -121,8 +122,25 @@ const Matrix& Camera::getProjectionMatrix()
 	}
 }
 
+const Matrix& Camera::getViewportMatrix()
+{
+	if (isViewportDirty)
+	{
+		viewport.m[0].x = viewPortWidth*0.5;
+		viewport.m[1].y = viewPortHeight*0.5;
+		viewport.m[2].z = 0.5;
+		viewport.m[3].x = viewPortWidth*0.5;
+		viewport.m[3].y = viewPortHeight*0.5;
+		viewport.m[3].z = 0.5;
+		viewport.m[3].w = 1;
+		isViewportDirty = false;
+	}
+	return viewport;
+}
+
 void Camera::setDirtyFlag()
 {
 	isProjectOrthDirty = true;
 	isProjectPerspDirty = true;
+	isViewportDirty = true;
 }

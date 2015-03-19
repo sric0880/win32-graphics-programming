@@ -1,16 +1,26 @@
 #pragma once
 #include "Camera.h"
 #include "GameObject.h"
+#include <vector>
+#include <memory>
 
 class Scene
 {
 public:
-	Scene();
+	Scene(HDC dc);
 	~Scene();
 	void drawScene();
+	Vector lightDir; // direction light in camera space
+	Matrix normalMatrix;  // normal transform to camera space
+	bool isDrawline;
 private:
-	Camera* camera;
-	GameObject* object;
+	HDC hdc;
+	std::unique_ptr<Camera> camera;
+	//GameObject* object;
+	std::vector<std::shared_ptr<GameObject> > objects;
+
+	Matrix projModelViewMatrix;
+	Matrix modelViewMatrix;
 
 	Fragment* allFragments;
 	int fragmentsSize;
@@ -31,7 +41,8 @@ private:
 	// 1. texture mapping
 	// 2. per pixel lighting
 	void processFragment(int size);
-	void drawPixels(HDC hdc);
+	void drawPixels();
 
-	void drawTriangle(HDC hdc, Vertex* buffer, UINT32 buffer_size, int* index, UINT32 index_size);
+	void render(std::shared_ptr<GameObject> obj);
+	void resizeFragments(int size);
 };

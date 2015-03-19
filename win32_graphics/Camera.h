@@ -31,6 +31,7 @@ public:
 	void setViewPortHeight(int);
 	const Matrix& getViewMatrix();
 	const Matrix& getProjectionMatrix();
+	const Matrix& getViewportMatrix();
 	
 private:
 	Transform transform;
@@ -44,10 +45,12 @@ private:
 	Matrix view;
 	Matrix projectOrth;
 	Matrix projectPersp;
+	Matrix viewport;
 
 	bool isViewDirty;
 	bool isProjectOrthDirty;
 	bool isProjectPerspDirty;
+	bool isViewportDirty;
 
 	float widthHeightRatio;
 	void setDirtyFlag();

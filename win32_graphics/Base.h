@@ -1,5 +1,5 @@
 #pragma once
-struct Matrix;
+//struct Matrix;
 struct Vector
 {
 	float x;
@@ -52,42 +52,21 @@ Matrix operator* (float x, const Matrix& mat);
 Vector operator* (float x, const Vector& vert);
 //Matrix operator* (const Vector& vec, const Matrix& mat); // undefined
 
-struct Position
-{
-	float x;
-	float y;
-	float z;
-};
-
-struct Color
-{
-	float r;
-	float g;
-	float b;
-	float alpha;
-};
-
-struct TexCoord
-{
-	float u;
-	float v;
-};
-
 struct Vertex
 {
-	Position position;
-	Color color;
-	TexCoord texCoord;
+	Vector position;
+	Vector color;
+	Vector texCoord;
 	Vector normal;
 };
 
 struct Fragment
 {
-	float x; // x in viewport
-	float y; // y in viewport
-	Color color;
+	int x; // x in viewport
+	int y; // y in viewport
+	Vector color;
 	Vector normal;
-	TexCoord texCoord;
+	Vector texCoord;
 	float depth;
 };
 
