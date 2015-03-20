@@ -69,9 +69,3 @@ struct Fragment
 	Vector texCoord;
 	float depth;
 };
-
-//struct Triangle
-//{
-//	Vertex v[3];
-//};
-

@@ -2,26 +2,46 @@
 #include "Scene.h"
 #include "Geometry.h"
 
-Scene::Scene(HDC dc):
-	hdc(dc),
+Scene::Scene():
 	allFragments(nullptr),
 	fragmentsSize(10000),
 	frameBuffer(nullptr),
 	depthBuffer(nullptr),
-	isDrawline(false)
-{}
+	isDrawline(false),
+	camera(new Camera())
+{
+	initFrameBuffer();
+	initDepthBuffer();
+}
 
 Scene::~Scene()
 {
+	releaseFrameBuffer();
+	releaseDepthBuffer();
 }
 
-void Scene::drawScene()
+Camera* Scene::mainCamera()
 {
+	return camera.get();
+}
+
+void Scene::addGameObject(std::shared_ptr<GameObject> obj)
+{
+	objects.push_back(obj);
+}
+
+void Scene::drawScene(HDC hdc, int w, int h)
+{
+	camera->setViewPortWidth(w);
+	camera->setViewPortHeight(h);
+	clearFrameBuffer();
+	clearDepthBuffer();
 	for(auto ptr_object : objects)
 	{
 		modelViewMatrix = camera->getViewMatrix() * ptr_object->transform.getTransform();
 		projModelViewMatrix = camera->getProjectionMatrix() * modelViewMatrix;
 		render(ptr_object);
+		drawPixels(hdc);
 	}
 }
 
@@ -40,8 +60,8 @@ void Scene::render(std::shared_ptr<GameObject> ptr_obj)
 			ptr_obj->getVertexAt(ptr_obj->getIndexAt(3*i+1)),
 			ptr_obj->getVertexAt(ptr_obj->getIndexAt(3*i+2)));
 		processFragment(size);
+		depthTest(size);
 	}
-	drawPixels();
 }
 
 void Scene::processVertex(Vertex* vertex)
@@ -152,29 +172,54 @@ void Scene::processFragment(int size)
 {
 	for(int i = 0; i < size; ++i)
 	{
-		//
+		//TODO: Texture mapping
+
+		//TODO: Lighting per pixel
+
+		//allFragments[0].color =  //	
 	}
 }
-void Scene::drawPixels()
+
+void Scene::depthTest(int size)
+{
+	int w = camera->getViewportWidth();
+	int h = camera->getViewportHeight();
+	for (int i = 0; i < size; ++i)
+	{
+		auto& frame = allFragments[i];
+		int index = fromPortviewCoordToBufferIndex(frame.x, frame.y, w, h);
+		if(allFragments[i].depth < depthBuffer[index])
+		{
+			depthBuffer[index] = allFragments[i].depth;
+			//update to frame buffer
+			frameBuffer[3*index] = allFragments[i].color.x * 0xff;
+			frameBuffer[3*index + 1] = allFragments[i].color.y * 0xff;
+			frameBuffer[3*index + 2] = allFragments[i].color.z * 0xff;
+		}
+	}
+}
+void Scene::drawPixels(HDC hdc)
 {
 	HDC mdc = CreateCompatibleDC(hdc);
-	HBITMAP bitmap = CreateCompatibleBitmap(hdc, camera->viewPortWidth, camera->viewPortHeight);
+	int viewportWidth = camera->getViewportWidth();
+	int viewportHeight = camera->getViewportHeight();
+	HBITMAP bitmap = CreateCompatibleBitmap(hdc, viewportWidth, viewportHeight);
 	SelectObject(mdc, bitmap);
 	//FillRect(hMemDC, &ClientRect, hBrush);  //// clear the background
 
 	//draw pixels
-	int pixelsCount = camera->viewPortWidth * camera->viewPortHeight;
-	for (int i = 0; i < camera->viewPortWidth; ++i)
+	int pixelsCount = viewportWidth * viewportHeight;
+	for (int i = 0; i < viewportWidth; ++i)
 	{
-		for (int j = 0; j < camera->viewPortHeight; ++j)
+		for (int j = 0; j < viewportHeight; ++j)
 		{
-			int index = camera->viewPortWidth*(camera->viewPortHeight-j-1) + i;
-			SetPixel(mdc, i, j, RGB(frameBuffer[index], frameBuffer[index+1], frameBuffer[index+2]));
+			int index = fromPortviewCoordToBufferIndex(i, j, viewportWidth, viewportHeight);
+			SetPixel(mdc, i, j, RGB(frameBuffer[3*index], frameBuffer[3*index+1], frameBuffer[3*index+2]));
 		}
 	}
 
 	//swap to hdc
-	BitBlt(hdc, 0, 0, camera->viewPortWidth, camera->viewPortHeight, mdc, 0, 0, SRCCOPY);
+	BitBlt(hdc, 0, 0, viewportWidth, viewportHeight, mdc, 0, 0, SRCCOPY);
 	//release
 	DeleteDC(mdc);
 	DeleteObject(bitmap);
@@ -184,4 +229,45 @@ void Scene::resizeFragments(int size)
 {
 	allFragments = (Fragment*)realloc(allFragments, sizeof(Fragment)*size);
 	fragmentsSize = size;
+}
+
+const int framebufferSize = 1680*1050*3;
+const int depthbufferSize = 1680*1050*sizeof(float);
+
+void Scene::initFrameBuffer()
+{
+	if (!frameBuffer)
+		frameBuffer = (UINT8*) malloc( framebufferSize );
+}
+void Scene::initDepthBuffer()
+{
+	if (!depthBuffer)
+		depthBuffer = (float*) malloc(depthbufferSize);
+}
+void Scene::clearFrameBuffer()
+{
+	if(frameBuffer)
+		memset(frameBuffer, 0, framebufferSize);
+}
+void Scene::clearDepthBuffer()
+{
+	if(depthBuffer)
+		memset(depthBuffer, -1, depthbufferSize);
+}
+void Scene::releaseFrameBuffer()
+{
+	if(frameBuffer)
+		free(frameBuffer);
+	frameBuffer = nullptr;
+}
+void Scene::releaseDepthBuffer()
+{
+	if(depthBuffer)
+		free(depthBuffer);
+	depthBuffer = nullptr;
+}
+
+int Scene::fromPortviewCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight)
+{
+	return viewportWidth* (viewportHeight - y -1) + x;
 }

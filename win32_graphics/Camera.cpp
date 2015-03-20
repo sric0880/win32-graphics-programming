@@ -144,3 +144,12 @@ void Camera::setDirtyFlag()
 	isProjectPerspDirty = true;
 	isViewportDirty = true;
 }
+
+int Camera::getViewportWidth() const
+{
+	return viewPortWidth;
+}
+int Camera::getViewportHeight() const
+{
+	return viewPortHeight;
+}

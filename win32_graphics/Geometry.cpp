@@ -39,7 +39,7 @@ int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* e
 		sy = -1;
 		dy = -dy;
 	}
-	if (steps == 0) return;
+	if (steps == 0) return 0;
 	buffer[0].x = start_x+1;
 	int e = 2*dy - dx;
 	int diff = 0;
@@ -74,8 +74,8 @@ void scanTriangle_top(FillData* data, float left, float right, float k1, float k
 	for(int y = ymin; ; ++y)
 	{
 		if(pushFirstLine) {
-			data->lines.push_back(Line(left, right));
-			data->fragmentsCount+=(right-left+1);
+			data->lines.push_back(Line((int)left, (int)right));
+			data->fragmentsCount+=((int)right-(int)left+1);
 			pushFirstLine = true;
 		}
 		left += k1;
@@ -86,11 +86,11 @@ void scanTriangle_top(FillData* data, float left, float right, float k1, float k
 void scanTriangle_bottom(FillData* data, int x, int y, float k1, float k2, int ymax)
 {
 	float left, right;
-	left = right = x;
+	left = right = (float)x;
 	for(int i = y; i <= ymax; ++i)
 	{
-		data->lines.push_back(Line(left,right));
-		data->fragmentsCount+=(right-left+1);
+		data->lines.push_back(Line((int)left,(int)right));
+		data->fragmentsCount+=((int)right-(int)left+1);
 		left += k1;
 		right += k2;
 	}
@@ -98,8 +98,8 @@ void scanTriangle_bottom(FillData* data, int x, int y, float k1, float k2, int y
 
 void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vector& p3)
 {
-	int x0 = p1.x; int x1 = p2.x; int x2 = p3.x;
-	int y0 = p1.y; int y1 = p2.y; int y2 = p3.y;
+	int x0 = (int)p1.x; int x1 = (int)p2.x; int x2 = (int)p3.x;
+	int y0 = (int)p1.y; int y1 = (int)p2.y; int y2 = (int)p3.y;
 	if((x0==x1&&x1==x2)||(y0==y1&&y1==y2))
 	{
 		return;  
@@ -130,7 +130,7 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 		data->ymin = y0;
 		float k1 = (float(y2-y0))/(x2-left);
 		float k2 = (float(y2-y0))/(x2-right);
-		scanTriangle_top(data, left, right, k1, k2, y0, true);
+		scanTriangle_top(data, (float)left, (float)right, k1, k2, y0, true);
 	}
 	else if(y1 == y2)
 	{
@@ -149,10 +149,10 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 		else 
 			scanTriangle_bottom(data, x0, y0,  (float(y2-y0))/(x2-x0), (float(y1-y0))/(x1 - x0), y1);
 
-		float x = x0+ 0.5 + (float)1.0f*(y1-y0)*(x2-x0)/(y2-y0);
+		float x = x0+ 0.5f + (float)1.0f*(y1-y0)*(x2-x0)/(y2-y0);
 		if (x1 < x2)
-			scanTriangle_top(data,  x1, x, (float(y2-y1))/(x2 - x1), (float(y2-y0))/(x2-x0), y1, false);
+			scanTriangle_top(data,  (float)x1, x, (float(y2-y1))/(x2 - x1), (float(y2-y0))/(x2-x0), y1, false);
 		else 
-			scanTriangle_top(data,  x, x1, (float(y2-y0))/(x2 - x0), (float(y2-y1))/(x2-x1), y1, false);
+			scanTriangle_top(data,  x, (float)x1, (float(y2-y0))/(x2 - x0), (float(y2-y1))/(x2-x1), y1, false);
 	}
 }

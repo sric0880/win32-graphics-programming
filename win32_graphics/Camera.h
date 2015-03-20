@@ -32,6 +32,8 @@ public:
 	const Matrix& getViewMatrix();
 	const Matrix& getProjectionMatrix();
 	const Matrix& getViewportMatrix();
+	int getViewportWidth() const;
+	int getViewportHeight() const;
 	
 private:
 	Transform transform;

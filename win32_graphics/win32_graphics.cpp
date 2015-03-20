@@ -3,6 +3,9 @@
 
 #include "stdafx.h"
 #include "win32_graphics.h"
+#include <memory>
+#include "Scene.h"
+#include "Testcase.h"
 
 #define MAX_LOADSTRING 100
 
@@ -10,6 +13,7 @@
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
+std::unique_ptr<Scene> scene;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -26,6 +30,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
  	// TODO: Place code here.
+	scene = configScene();
 	MSG msg;
 	HACCEL hAccelTable;
 
@@ -148,11 +153,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	case WM_PAINT:
+		{
 		hdc = BeginPaint(hWnd, &ps);
+		
 		// Drawing code
-		SetPixel(hdc, 100, 100, RGB(255, 0, 0));
+		RECT clientRect;
+		GetClientRect(hWnd, &clientRect);
+		int w = clientRect.right - clientRect.left;
+		int h = clientRect.top - clientRect.bottom;
+		scene->drawScene(hdc, w, h);
+
 		EndPaint(hWnd, &ps);
 		break;
+		}
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;

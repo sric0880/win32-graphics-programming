@@ -7,14 +7,16 @@
 class Scene
 {
 public:
-	Scene(HDC dc);
+	Scene();
 	~Scene();
-	void drawScene();
+	void drawScene(HDC hdc, int w, int h);
+	Camera* mainCamera();
+	void addGameObject(std::shared_ptr<GameObject> obj);
+	//TODO: need remove an object?
 	Vector lightDir; // direction light in camera space
 	Matrix normalMatrix;  // normal transform to camera space
 	bool isDrawline;
 private:
-	HDC hdc;
 	std::unique_ptr<Camera> camera;
 	//GameObject* object;
 	std::vector<std::shared_ptr<GameObject> > objects;
@@ -41,8 +43,18 @@ private:
 	// 1. texture mapping
 	// 2. per pixel lighting
 	void processFragment(int size);
-	void drawPixels();
+	void depthTest(int size);
+	void drawPixels(HDC hdc);
 
 	void render(std::shared_ptr<GameObject> obj);
 	void resizeFragments(int size);
+
+	void initFrameBuffer();
+	void initDepthBuffer();
+	void clearFrameBuffer();
+	void clearDepthBuffer();
+	void releaseFrameBuffer();
+	void releaseDepthBuffer();
+
+	static int fromPortviewCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight);
 };

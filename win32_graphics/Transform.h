@@ -1,3 +1,4 @@
+#pragma once
 #include "base.h"
 class Transform
 {
@@ -8,10 +9,10 @@ public:
 	void setRotation(float pitch, float yaw, float roll);
 	void setScale(float x, float y, float z);
 
-	const Vector& getTranslation() const;
+	Vector getTranslation() const;
 	const Vector& getEulerAngle() const;
 	const Vector& getQuaternion() const;
-	const Vector& getScale() const;
+	Vector getScale() const;
 	const Matrix& getTransform() const;
 
 	static Vector quaternionToEulerAngle(const Vector& q1);
