@@ -11,7 +11,8 @@ public:
 	~Scene();
 	void drawScene(HDC hdc, int w, int h);
 	Camera* mainCamera();
-	void addGameObject(std::shared_ptr<GameObject> obj);
+	//void addGameObject(std::shared_ptr<GameObject> obj);
+	void addGameObject(GameObject&& obj);
 	//TODO: need remove an object?
 	Vector lightDir; // direction light in camera space
 	Matrix normalMatrix;  // normal transform to camera space
@@ -19,20 +20,25 @@ public:
 private:
 	std::unique_ptr<Camera> camera;
 	//GameObject* object;
-	std::vector<std::shared_ptr<GameObject> > objects;
-
+	std::vector<GameObject> objects;
 	Matrix projModelViewMatrix;
 	Matrix modelViewMatrix;
 
+	//cache all vertexs in a gameobject
+	Vertex* vertexBuffer;
+	int vertexBufferSize;
+
+	//cache all the fragments generated from the vertex
 	Fragment* allFragments;
 	int fragmentsSize;
+
 	UINT8* frameBuffer;
 	float* depthBuffer;
 
 	// 1. modelview and projection transform
 	// 2. normalize
 	// 3. gouraud lighting (support ambient light and directional light)
-	void processVertex(Vertex* vertex);
+	void processVertex(const Vertex* input, Vertex* output);
 
 	//generate fragments from triangle made up with v1, v2 and v3
 	// return fragments size
@@ -46,11 +52,13 @@ private:
 	void depthTest(int size);
 	void drawPixels(HDC hdc);
 
-	void render(std::shared_ptr<GameObject> obj);
+	void render(const GameObject& obj);
 	void resizeFragments(int size);
+	void resizeVertexBuffer(int size);
 
 	void initFrameBuffer();
 	void initDepthBuffer();
+	void initVertexBuffer();
 	void clearFrameBuffer();
 	void clearDepthBuffer();
 	void releaseFrameBuffer();

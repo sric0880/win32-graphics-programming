@@ -4,6 +4,8 @@
 #include "GameObject.h"
 #include "Scene.h"
 
+#include "OutputDebug.h"
+
 void configCamera(Camera* camera)
 {
 	camera->setIsOrthProjection(false);
@@ -14,27 +16,44 @@ void configCamera(Camera* camera)
 	//camera->setTranslation(0,0,0);
 	//camera->setRotation(0,0,0);
 }
-std::shared_ptr<GameObject> loadGameObject()
+GameObject loadGameObject()
 {
-	std::shared_ptr<GameObject> go(new GameObject());
-	//auto vbuffer = go->getVertexBuffer(4);
-	//auto ibuffer = go->getIndexBuffer(6);
-	//vbuffer[0].position.x = ;
-	//ibuffer[]
+	GameObject go;
+	auto vbuffer = go.getVertexBuffer(4);
+	auto ibuffer = go.getIndexBuffer(6);
+
+	vbuffer[0].position.x = -100;
+	vbuffer[0].position.y = 100;
+	vbuffer[0].position.z = 0;
+	vbuffer[1].position.x = -100;
+	vbuffer[1].position.y = -100;
+	vbuffer[1].position.z = 0;
+	vbuffer[2].position.x = 100;
+	vbuffer[2].position.y = -100;
+	vbuffer[2].position.z = 0;
+	vbuffer[3].position.x = 100;
+	vbuffer[3].position.y = 100;
+	vbuffer[3].position.z = 0;
+
+	ibuffer[0] = 0;
+	ibuffer[1] = 1;
+	ibuffer[2] = 2;
+	ibuffer[3] = 0;
+	ibuffer[4] = 2;
+	ibuffer[5] = 3;
+
+	go.transform.setTranslation(0,0,2);
+	go.transform.setRotation(0,0,30);
+	go.transform.setScale(2,2,2);
+
 	return go;
 }
 
-std::unique_ptr<Scene> configScene()
+void buildScene(Scene* scene)
 {
-	std::unique_ptr<Scene> scene(new Scene());
-
 	configCamera(scene->mainCamera());
 
-	auto obj = loadGameObject();
-
-	scene->addGameObject(obj);
+	scene->addGameObject(loadGameObject());
 
 	scene->isDrawline = true;
-
-	return scene;
 }

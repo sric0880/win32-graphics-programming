@@ -7,24 +7,33 @@ public:
 	GameObject(void);
 	~GameObject(void);
 
+	GameObject(GameObject&&);
+	GameObject& operator= (GameObject&& obj);
+	
 	Transform transform;
 
 	//Maybe return nullptr
-	Vertex* getVertexBuffer(UINT32 size = 0);
+	Vertex* getVertexBuffer(int size = 0);
 	//Maybe return nullptr
-	int* getIndexBuffer(UINT32 size = 0);
+	int* getIndexBuffer(int size = 0);
 
-	Vertex* getVertexAt(int i);
-	int getIndexAt(int i);
+	const Vertex* getVertexAt(int i) const;
+	int getIndexAt(int i) const;
 
 	int getVertexCount() const;
 	int getTriangleCount() const;
 
 private:
+	//Don't allow copy and assign from another gameobject
+	GameObject(const GameObject&);
+	GameObject& operator= (const GameObject& obj);
 	//render data
-	Vertex* buffer;
-	UINT32 buffer_size;
 	int* index;
-	UINT32 index_size;
+	int index_size;
+	Vertex* buffer;
+	int buffer_size;
+
+	void releaseVertexBuffer();
+	void releaseIndexBuffer();
 };
 

@@ -2,9 +2,13 @@
 #include "Scene.h"
 #include "Geometry.h"
 
+#include "OutputDebug.h"
+
 Scene::Scene():
 	allFragments(nullptr),
-	fragmentsSize(10000),
+	vertexBuffer(nullptr),
+	vertexBufferSize(1000),
+	fragmentsSize(1000),
 	frameBuffer(nullptr),
 	depthBuffer(nullptr),
 	isDrawline(false),
@@ -18,6 +22,8 @@ Scene::~Scene()
 {
 	releaseFrameBuffer();
 	releaseDepthBuffer();
+	if (allFragments) free(allFragments);
+	if (vertexBuffer) free(vertexBuffer);
 }
 
 Camera* Scene::mainCamera()
@@ -25,20 +31,19 @@ Camera* Scene::mainCamera()
 	return camera.get();
 }
 
-void Scene::addGameObject(std::shared_ptr<GameObject> obj)
+void Scene::addGameObject(GameObject&& obj)
 {
-	objects.push_back(obj);
+	objects.emplace_back(std::forward<GameObject&&>(obj));
 }
-
 void Scene::drawScene(HDC hdc, int w, int h)
 {
 	camera->setViewPortWidth(w);
 	camera->setViewPortHeight(h);
 	clearFrameBuffer();
 	clearDepthBuffer();
-	for(auto ptr_object : objects)
+	for(auto& ptr_object : objects)
 	{
-		modelViewMatrix = camera->getViewMatrix() * ptr_object->transform.getTransform();
+		modelViewMatrix = camera->getViewMatrix() * ptr_object.transform.getTransform();
 		projModelViewMatrix = camera->getProjectionMatrix() * modelViewMatrix;
 		render(ptr_object);
 		drawPixels(hdc);
@@ -46,32 +51,46 @@ void Scene::drawScene(HDC hdc, int w, int h)
 }
 
 // draw buffer contains position, normal, color, texcoord that can put into triangles using index
-void Scene::render(std::shared_ptr<GameObject> ptr_obj)
+void Scene::render(const GameObject& ptr_obj) //gameobject must be const
 {
-	for (int i = 0; i < ptr_obj->getVertexCount(); ++i)
+	int vertexCount = ptr_obj.getVertexCount();
+	if (!vertexBuffer)
 	{
-		processVertex(ptr_obj->getVertexAt(i));
+		vertexBuffer = (Vertex*)malloc(sizeof(Vertex)* vertexCount);
+		vertexBufferSize = vertexCount;
+	}else if (vertexBufferSize < vertexCount)
+	{
+		resizeVertexBuffer(vertexCount);
 	}
-	int countOfTriangles = ptr_obj->getTriangleCount();
+	for (int i = 0; i < vertexCount; ++i)
+	{
+		processVertex(ptr_obj.getVertexAt(i), vertexBuffer + i);
+	}
+	int countOfTriangles = ptr_obj.getTriangleCount();
 	for (int i = 0; i < countOfTriangles; ++i)
 	{
 		int size = generateFragment(
-			ptr_obj->getVertexAt(ptr_obj->getIndexAt(3*i)),
-			ptr_obj->getVertexAt(ptr_obj->getIndexAt(3*i+1)),
-			ptr_obj->getVertexAt(ptr_obj->getIndexAt(3*i+2)));
+			vertexBuffer + ptr_obj.getIndexAt(3*i),
+			vertexBuffer + ptr_obj.getIndexAt(3*i+1),
+			vertexBuffer + ptr_obj.getIndexAt(3*i+2));
+		print("fragments size: %d", size);
 		processFragment(size);
 		depthTest(size);
 	}
 }
 
-void Scene::processVertex(Vertex* vertex)
+void Scene::processVertex(const Vertex* input, Vertex* output)
 {
 	// projection modelview transform
-	vertex->position = projModelViewMatrix * vertex->position;
+	output->position = projModelViewMatrix * input->position;
 
 	//TODO: transform normal to camera space then normalize
 
 	//TODO: lighting per vertex
+
+	output->color = input->color;
+	output->normal = input->normal;
+	output->texCoord = input->texCoord;
 }
 
 int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
@@ -106,11 +125,11 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 		int c = 3;
 		c+= drawLineBresenham(allFragments+c, &allFragments[0], &allFragments[1]);
 		c+= drawLineBresenham(allFragments+c, &allFragments[1], &allFragments[2]);
-		c+= drawLineBresenham(allFragments+c, &allFragments[2], &allFragments[3]);
+		c+= drawLineBresenham(allFragments+c, &allFragments[0], &allFragments[2]);
 
 		for (int i = 0; i < c; ++i)
 		{
-			allFragments[i].color.x = 0;
+			allFragments[i].color.x = 1;
 			allFragments[i].color.y = 0;
 			allFragments[i].color.z = 0;
 			allFragments[i].color.w = 0;
@@ -188,6 +207,7 @@ void Scene::depthTest(int size)
 	{
 		auto& frame = allFragments[i];
 		int index = fromPortviewCoordToBufferIndex(frame.x, frame.y, w, h);
+		//FIXME: x and y is not right!!!
 		if(allFragments[i].depth < depthBuffer[index])
 		{
 			depthBuffer[index] = allFragments[i].depth;
@@ -229,6 +249,11 @@ void Scene::resizeFragments(int size)
 {
 	allFragments = (Fragment*)realloc(allFragments, sizeof(Fragment)*size);
 	fragmentsSize = size;
+}
+void Scene::resizeVertexBuffer(int size)
+{
+	vertexBuffer = (Vertex*)realloc(vertexBuffer, sizeof(Vertex)* size);
+	vertexBufferSize = size;
 }
 
 const int framebufferSize = 1680*1050*3;
