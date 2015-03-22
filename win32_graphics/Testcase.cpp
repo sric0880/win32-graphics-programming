@@ -6,13 +6,14 @@
 
 #include "OutputDebug.h"
 
-GameObject loadQuad();
-GameObject loadCube();
-GameObject loadSphere();
+GameObject Quad();
+GameObject Cube();
+GameObject Sphere();
 
 void configCamera(Camera* camera)
 {
-	camera->setIsOrthProjection(true);
+	//camera->setIsOrthProjection(true);
+	camera->setIsOrthProjection(false);
 	camera->setFarClippingPlane(1000);
 	camera->setNearClippingPlane(0.3f);
 	camera->setFieldOfView(60);
@@ -26,38 +27,26 @@ void buildScene(Scene* scene)
 {
 	configCamera(scene->mainCamera());
 
-	scene->addGameObject(loadQuad());
-	scene->addGameObject(loadCube());
-	scene->addGameObject(loadSphere());
+	scene->addGameObject(Quad());
+	scene->addGameObject(Cube());
+	//scene->addGameObject(Sphere());
 
 	scene->isDrawline = true;
 }
 
-GameObject loadQuad()
+GameObject Quad()
 {
 	GameObject go;
 	auto vbuffer = go.getVertexBuffer(4);
 	auto ibuffer = go.getIndexBuffer(6);
 
-	vbuffer[0].position.x = -1;
-	vbuffer[0].position.y = 1;
-	vbuffer[0].position.z = 0;
-	vbuffer[1].position.x = -1;
-	vbuffer[1].position.y = -1;
-	vbuffer[1].position.z = 0;
-	vbuffer[2].position.x = 1;
-	vbuffer[2].position.y = -1;
-	vbuffer[2].position.z = 0;
-	vbuffer[3].position.x = 1;
-	vbuffer[3].position.y = 1;
-	vbuffer[3].position.z = 0;
+	vbuffer[0] = { { -1, 1, 0 }, { 0, 1, 1, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} };
+	vbuffer[1] = { { -1, -1, 0 }, { 1, 0, 1, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} };
+	vbuffer[2] = { { 1, -1, 0 }, { 1, 0, 0, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} }; //red
+	vbuffer[3] = { { 1, 1, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} }; //green
 
-	ibuffer[0] = 0;
-	ibuffer[1] = 1;
-	ibuffer[2] = 2;
-	ibuffer[3] = 0;
-	ibuffer[4] = 2;
-	ibuffer[5] = 3;
+	int index[] = {0,1,2, 0,2,3};
+	memcpy(ibuffer, index, sizeof(int) * 6);
 
 	go.transform.setTranslation(-3,0,2);
 	go.transform.setRotation(30,0,0);
@@ -66,78 +55,43 @@ GameObject loadQuad()
 	return go;
 }
 
-GameObject loadCube()
+GameObject Cube()
 {
 	GameObject go;
 	auto vbuffer = go.getVertexBuffer(8);
-	auto ibuffer = go.getIndexBuffer(6);
+	auto ibuffer = go.getIndexBuffer(36);
 
-	vbuffer[0].position ;
+	// position // color // texture coord // normal
+	vbuffer[0] = { { 1, 1, -1 }, { 0, 1, 1, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} };
+	vbuffer[1] = { { -1, 1, -1 }, { 1, 1, 1, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} };
+	vbuffer[2] = { { -1, -1, -1 }, { 1, 0, 0, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} }; //red
+	vbuffer[3] = { { 1, -1, -1 }, { 0, 1, 0, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} }; //green
+	vbuffer[4] = { { 1, -1, 1 }, { 1, 1, 0, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} };
+	vbuffer[5] = { { 1, 1, 1 }, { 1, 0, 1, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} };
+	vbuffer[6] = { { -1, 1, 1 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} };
+	vbuffer[7] = { { -1, -1, 1 }, { 0, 0, 1, 0 }, { 0, 0, 0, 0 }, {0,0,0,0} }; //blue
 
-	vbuffer[0].position.x = -1;
-	vbuffer[0].position.y = 1;
-	vbuffer[0].position.z = 0;
-	vbuffer[1].position.x = -1;
-	vbuffer[1].position.y = -1;
-	vbuffer[1].position.z = 0;
-	vbuffer[2].position.x = 1;
-	vbuffer[2].position.y = -1;
-	vbuffer[2].position.z = 0;
-	vbuffer[3].position.x = 1;
-	vbuffer[3].position.y = 1;
-	vbuffer[3].position.z = 0;
-	vbuffer[4].position.x = -1;
-	vbuffer[4].position.y = 1;
-	vbuffer[5].position.z = 0;
-	vbuffer[1].position.x = -1;
-	vbuffer[1].position.y = -1;
-	vbuffer[1].position.z = 0;
-	vbuffer[2].position.x = 1;
-	vbuffer[2].position.y = -1;
-	vbuffer[2].position.z = 0;
-	vbuffer[3].position.x = 1;
-	vbuffer[3].position.y = 1;
-	vbuffer[3].position.z = 0;
+	int index[] = { 0, 1, 2, 2, 3, 0,   // 36 of indices
+		0, 3, 4, 4, 5, 0,
+		0, 5, 6, 6, 1, 0,
+		1, 6, 7, 7, 2, 1,
+		7, 4, 3, 3, 2, 7,
+		4, 7, 6, 6, 5, 4 };
 
-	ibuffer[0] = 0;
-	ibuffer[1] = 1;
-	ibuffer[2] = 2;
-	ibuffer[3] = 0;
-	ibuffer[4] = 2;
-	ibuffer[5] = 3;
+	memcpy(ibuffer, index, sizeof(int) * 36);
 
-	go.transform.setTranslation(-4,0,2);
-	go.transform.setRotation(30,0,0);
-	go.transform.setScale(2,2,2);
+	go.transform.setTranslation(4,-2, 3);
+	go.transform.setRotation(45,45,45);
+	go.transform.setScale(1,1,1);
 
 	return go;
 }
 
-GameObject loadSphere()
+GameObject Sphere()
 {
 	GameObject go;
 	auto vbuffer = go.getVertexBuffer(4);
 	auto ibuffer = go.getIndexBuffer(6);
-
-	vbuffer[0].position.x = -1;
-	vbuffer[0].position.y = 1;
-	vbuffer[0].position.z = 0;
-	vbuffer[1].position.x = -1;
-	vbuffer[1].position.y = -1;
-	vbuffer[1].position.z = 0;
-	vbuffer[2].position.x = 1;
-	vbuffer[2].position.y = -1;
-	vbuffer[2].position.z = 0;
-	vbuffer[3].position.x = 1;
-	vbuffer[3].position.y = 1;
-	vbuffer[3].position.z = 0;
-
-	ibuffer[0] = 0;
-	ibuffer[1] = 1;
-	ibuffer[2] = 2;
-	ibuffer[3] = 0;
-	ibuffer[4] = 2;
-	ibuffer[5] = 3;
 
 	go.transform.setTranslation(-4,0,2);
 	go.transform.setRotation(30,0,0);
