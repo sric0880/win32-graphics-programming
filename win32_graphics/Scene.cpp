@@ -43,7 +43,12 @@ void Scene::drawScene(HDC hdc, int w, int h)
 	clearDepthBuffer();
 	for(auto& ptr_object : objects)
 	{
-		modelViewMatrix = camera->getViewMatrix() * ptr_object.transform.getTransform();
+		Matrix transform = ptr_object.transform.getTransform();
+#ifdef _DEBUG
+		print("Object tranform matrix: \r\n");
+		transform.log();
+#endif
+		modelViewMatrix = camera->getViewMatrix() * transform;
 		projModelViewMatrix = camera->getProjectionMatrix() * modelViewMatrix;
 		render(ptr_object);
 		drawPixels(hdc);
@@ -102,34 +107,40 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 	//TODO: clipping transformation
 
 	// transform to view port
-	v1->position = camera->getViewportMatrix() * v1->position;
-	v2->position = camera->getViewportMatrix() * v2->position;
-	v3->position = camera->getViewportMatrix() * v3->position;
+	Vector pos1 = camera->getViewportMatrix() * v1->position;
+	Vector pos2 = camera->getViewportMatrix() * v2->position;
+	Vector pos3 = camera->getViewportMatrix() * v3->position;
+
+
+	pos1.log();
+	pos2.log();
+	pos3.log();
 
 	//Draw line
 	if (isDrawline)
 	{
-		int count = max( fabs(v1->position.x - v2->position.x), fabs(v1->position.y - v2->position.y));
-		count += max( fabs(v1->position.x - v3->position.x), fabs(v1->position.y - v3->position.y));
-		count += max( fabs(v3->position.x - v2->position.x), fabs(v3->position.y - v2->position.y));
+		int count = max( fabs(pos1.x - pos2.x), fabs(pos1.y - pos2.y));
+		count += max( fabs(pos1.x - pos3.x), fabs(pos1.y - pos3.y));
+		count += max( fabs(pos3.x - pos2.x), fabs(pos3.y - pos2.y));
 		if (count > fragmentsSize)
 		{
 			resizeFragments(count);
 		}
-		allFragments[0].x = v1->position.x;
-		allFragments[0].y = v1->position.y;
-		allFragments[1].x = v2->position.x;
-		allFragments[1].y = v2->position.y;
-		allFragments[2].x = v3->position.x;
-		allFragments[2].y = v3->position.y;
+		allFragments[0].x = pos1.x;
+		allFragments[0].y = pos1.y;
+		allFragments[1].x = pos2.x;
+		allFragments[1].y = pos2.y;
+		allFragments[2].x = pos3.x;
+		allFragments[2].y = pos3.y;
+
 		int c = 3;
 		c+= drawLineBresenham(allFragments+c, &allFragments[0], &allFragments[1]);
 		c+= drawLineBresenham(allFragments+c, &allFragments[1], &allFragments[2]);
 		c+= drawLineBresenham(allFragments+c, &allFragments[0], &allFragments[2]);
-
+		//set all the line color to black
 		for (int i = 0; i < c; ++i)
 		{
-			allFragments[i].color.x = 1;
+			allFragments[i].color.x = 0;
 			allFragments[i].color.y = 0;
 			allFragments[i].color.z = 0;
 			allFragments[i].color.w = 0;
@@ -141,7 +152,7 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 	//Draw triangles
 	// rasterization and interpolation
 	{
-		//TODO: 1. culling ±³ÃæÏû³ý
+		//TODO: 1. culling
 		
 		//2. Rasterization
 		FillData data;
@@ -177,7 +188,7 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 		for(int i = 0; i < c; ++i)
 		{
 			Vector v(allFragments[i].x, allFragments[i].y, 1);
-			Vector interp = mat * v; //FIXME: reverse mat
+			Vector interp = ~mat * v;
 			allFragments[i].color = v1->color * interp.x + v2->color * interp.y + v3->color * interp.z;
 			allFragments[i].normal = v1->normal * interp.x + v2->normal * interp.y + v3->normal * interp.z;
 			allFragments[i].texCoord = v1->texCoord * interp.x + v2->texCoord * interp.y + v3->texCoord * interp.z;
@@ -206,15 +217,22 @@ void Scene::depthTest(int size)
 	for (int i = 0; i < size; ++i)
 	{
 		auto& frame = allFragments[i];
-		int index = fromPortviewCoordToBufferIndex(frame.x, frame.y, w, h);
-		//FIXME: x and y is not right!!!
-		if(allFragments[i].depth < depthBuffer[index])
+		int index = 3*bufferIndex(frame.x, frame.y, w, h);
+		if (isDrawline) //not need test depth
+		{
+			//update to frame buffer
+			frameBuffer[index] = allFragments[i].color.x * 0xff;
+			frameBuffer[index + 1] = allFragments[i].color.y * 0xff;
+			frameBuffer[index + 2] = allFragments[i].color.z * 0xff;
+		}
+		else if (depthBuffer[index] < allFragments[i].depth)
 		{
 			depthBuffer[index] = allFragments[i].depth;
+
 			//update to frame buffer
-			frameBuffer[3*index] = allFragments[i].color.x * 0xff;
-			frameBuffer[3*index + 1] = allFragments[i].color.y * 0xff;
-			frameBuffer[3*index + 2] = allFragments[i].color.z * 0xff;
+			frameBuffer[index] = allFragments[i].color.x * 0xff;
+			frameBuffer[index + 1] = allFragments[i].color.y * 0xff;
+			frameBuffer[index + 2] = allFragments[i].color.z * 0xff;
 		}
 	}
 }
@@ -225,7 +243,6 @@ void Scene::drawPixels(HDC hdc)
 	int viewportHeight = camera->getViewportHeight();
 	HBITMAP bitmap = CreateCompatibleBitmap(hdc, viewportWidth, viewportHeight);
 	SelectObject(mdc, bitmap);
-	//FillRect(hMemDC, &ClientRect, hBrush);  //// clear the background
 
 	//draw pixels
 	int pixelsCount = viewportWidth * viewportHeight;
@@ -233,8 +250,8 @@ void Scene::drawPixels(HDC hdc)
 	{
 		for (int j = 0; j < viewportHeight; ++j)
 		{
-			int index = fromPortviewCoordToBufferIndex(i, j, viewportWidth, viewportHeight);
-			SetPixel(mdc, i, j, RGB(frameBuffer[3*index], frameBuffer[3*index+1], frameBuffer[3*index+2]));
+			int index =3* windowCoordToBufferIndex(i, j, viewportWidth, viewportHeight);
+			SetPixel(mdc, i, j, RGB(frameBuffer[index], frameBuffer[index+1], frameBuffer[index+2]));
 		}
 	}
 
@@ -272,7 +289,7 @@ void Scene::initDepthBuffer()
 void Scene::clearFrameBuffer()
 {
 	if(frameBuffer)
-		memset(frameBuffer, 0, framebufferSize);
+		memset(frameBuffer, 0xff, framebufferSize);
 }
 void Scene::clearDepthBuffer()
 {
@@ -292,7 +309,12 @@ void Scene::releaseDepthBuffer()
 	depthBuffer = nullptr;
 }
 
-int Scene::fromPortviewCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight)
+inline int Scene::bufferIndex(int x, int y, int viewportWidth, int viewportHeight)
+{
+	return viewportWidth * (y -1) + x;
+}
+
+inline int Scene::windowCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight)
 {
 	return viewportWidth* (viewportHeight - y -1) + x;
 }

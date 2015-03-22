@@ -64,5 +64,7 @@ private:
 	void releaseFrameBuffer();
 	void releaseDepthBuffer();
 
-	static int fromPortviewCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight);
+	static inline int bufferIndex(int x, int y, int viewportWidth, int viewportHeight);
+	//upside down
+	static inline int windowCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight);
 };

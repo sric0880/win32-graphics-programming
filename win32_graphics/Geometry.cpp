@@ -10,12 +10,6 @@ int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* e
 	int start_y = start->y;
 	int end_x = end->x;
 	int end_y = end->y;
-	if (start->x > end->x){
-		start_x = end->x;
-		end_x = start->x;
-		start_y = end->y;
-		end_y = start->y;
-	}
 	int dx = end_x - start_x;
 	int dy = end_y - start_y;
 	if(dx == 0 && dy ==0) return 0;
@@ -23,16 +17,18 @@ int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* e
 	if (dx == 0 || fabs( ((float)dy)/dx ) > 1 )
 	{
 		//swap x and y axes
-		int temp = start_x;
-		start_x = start_y;
-		start_y = temp;
-		temp = end_x;
-		end_x = end_y;
-		end_y = temp;
+		std::swap(start_x, start_y);
+		std::swap(end_x, end_y);
 		isRevert = true;
 	}
+	if (start_x > end_x){
+		std::swap(start_x, end_x);
+		std::swap(start_y, end_y);
+	}
+	dx = end_x - start_x;
+	dy = end_y - start_y;
 
-	int steps = 0;	
+	int steps = 0;
 	steps = dx - 1;
 	int sy = 1;
 	if (dy < 0) {

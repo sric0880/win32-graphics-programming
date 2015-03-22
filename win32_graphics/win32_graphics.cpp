@@ -160,7 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		RECT clientRect;
 		GetClientRect(hWnd, &clientRect);
 		int w = clientRect.right - clientRect.left;
-		int h = clientRect.top - clientRect.bottom;
+		int h = clientRect.bottom - clientRect.top;
 		scene.drawScene(hdc, w, h);
 
 		EndPaint(hWnd, &ps);

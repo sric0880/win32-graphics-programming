@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Base.h"
 #include <cmath>
+#include <cassert>
+#include "OutputDebug.h"
 
 float Vector::length()
 {
@@ -30,6 +32,10 @@ Vector Vector::dotProduct (const Vector& vec) const
 Vector Vector::crossProduct(const Vector& vec) const
 {
 	return Vector(y*vec.z - z*vec.y, z*vec.x - x*vec.z, x*vec.y - y*vec.x);
+}
+void Vector::log()
+{
+	print("x: %.3f, y: %.3f, z: %.3f, w: %.3f\r\n", x, y, z, w);
 }
 
 Matrix & Matrix::operator+= (const Matrix& mat)
@@ -160,12 +166,160 @@ Matrix Matrix::operator/ (float x) const
 	}
 	return matrix;
 }
-//Matrix Matrix::operator~ () const
-//{
-//	Matrix matrix;
-//
-//	return matrix;
-//}
+
+// get the inverse of matrix
+//see http://stackoverflow.com/questions/1148309/inverting-a-4x4-matrix
+Matrix Matrix::operator~() const
+{
+	Matrix ret;
+	float mat[16];
+	for (int i =0; i < 4; ++i)
+	{
+		mat[i] = m[i].x;
+		mat[4+i] = m[i].y;
+		mat[8+i] = m[i].z;
+		mat[12+i] = m[i].w;
+	}
+    float inv[16], det;
+    int i;
+
+    inv[0] = mat[5]  * mat[10] * mat[15] - 
+             mat[5]  * mat[11] * mat[14] - 
+             mat[9]  * mat[6]  * mat[15] + 
+             mat[9]  * mat[7]  * mat[14] +
+             mat[13] * mat[6]  * mat[11] - 
+             mat[13] * mat[7]  * mat[10];
+
+    inv[4] = -mat[4]  * mat[10] * mat[15] + 
+              mat[4]  * mat[11] * mat[14] + 
+              mat[8]  * mat[6]  * mat[15] - 
+              mat[8]  * mat[7]  * mat[14] - 
+              mat[12] * mat[6]  * mat[11] + 
+              mat[12] * mat[7]  * mat[10];
+
+    inv[8] = mat[4]  * mat[9] * mat[15] - 
+             mat[4]  * mat[11] * mat[13] - 
+             mat[8]  * mat[5] * mat[15] + 
+             mat[8]  * mat[7] * mat[13] + 
+             mat[12] * mat[5] * mat[11] - 
+             mat[12] * mat[7] * mat[9];
+
+    inv[12] = -mat[4]  * mat[9] * mat[14] + 
+               mat[4]  * mat[10] * mat[13] +
+               mat[8]  * mat[5] * mat[14] - 
+               mat[8]  * mat[6] * mat[13] - 
+               mat[12] * mat[5] * mat[10] + 
+               mat[12] * mat[6] * mat[9];
+
+    inv[1] = -mat[1]  * mat[10] * mat[15] + 
+              mat[1]  * mat[11] * mat[14] + 
+              mat[9]  * mat[2] * mat[15] - 
+              mat[9]  * mat[3] * mat[14] - 
+              mat[13] * mat[2] * mat[11] + 
+              mat[13] * mat[3] * mat[10];
+
+    inv[5] = mat[0]  * mat[10] * mat[15] - 
+             mat[0]  * mat[11] * mat[14] - 
+             mat[8]  * mat[2] * mat[15] + 
+             mat[8]  * mat[3] * mat[14] + 
+             mat[12] * mat[2] * mat[11] - 
+             mat[12] * mat[3] * mat[10];
+
+    inv[9] = -mat[0]  * mat[9] * mat[15] + 
+              mat[0]  * mat[11] * mat[13] + 
+              mat[8]  * mat[1] * mat[15] - 
+              mat[8]  * mat[3] * mat[13] - 
+              mat[12] * mat[1] * mat[11] + 
+              mat[12] * mat[3] * mat[9];
+
+    inv[13] = mat[0]  * mat[9] * mat[14] - 
+              mat[0]  * mat[10] * mat[13] - 
+              mat[8]  * mat[1] * mat[14] + 
+              mat[8]  * mat[2] * mat[13] + 
+              mat[12] * mat[1] * mat[10] - 
+              mat[12] * mat[2] * mat[9];
+
+    inv[2] = mat[1]  * mat[6] * mat[15] - 
+             mat[1]  * mat[7] * mat[14] - 
+             mat[5]  * mat[2] * mat[15] + 
+             mat[5]  * mat[3] * mat[14] + 
+             mat[13] * mat[2] * mat[7] - 
+             mat[13] * mat[3] * mat[6];
+
+    inv[6] = -mat[0]  * mat[6] * mat[15] + 
+              mat[0]  * mat[7] * mat[14] + 
+              mat[4]  * mat[2] * mat[15] - 
+              mat[4]  * mat[3] * mat[14] - 
+              mat[12] * mat[2] * mat[7] + 
+              mat[12] * mat[3] * mat[6];
+
+    inv[10] = mat[0]  * mat[5] * mat[15] - 
+              mat[0]  * mat[7] * mat[13] - 
+              mat[4]  * mat[1] * mat[15] + 
+              mat[4]  * mat[3] * mat[13] + 
+              mat[12] * mat[1] * mat[7] - 
+              mat[12] * mat[3] * mat[5];
+
+    inv[14] = -mat[0]  * mat[5] * mat[14] + 
+               mat[0]  * mat[6] * mat[13] + 
+               mat[4]  * mat[1] * mat[14] - 
+               mat[4]  * mat[2] * mat[13] - 
+               mat[12] * mat[1] * mat[6] + 
+               mat[12] * mat[2] * mat[5];
+
+    inv[3] = -mat[1] * mat[6] * mat[11] + 
+              mat[1] * mat[7] * mat[10] + 
+              mat[5] * mat[2] * mat[11] - 
+              mat[5] * mat[3] * mat[10] - 
+              mat[9] * mat[2] * mat[7] + 
+              mat[9] * mat[3] * mat[6];
+
+    inv[7] = mat[0] * mat[6] * mat[11] - 
+             mat[0] * mat[7] * mat[10] - 
+             mat[4] * mat[2] * mat[11] + 
+             mat[4] * mat[3] * mat[10] + 
+             mat[8] * mat[2] * mat[7] - 
+             mat[8] * mat[3] * mat[6];
+
+    inv[11] = -mat[0] * mat[5] * mat[11] + 
+               mat[0] * mat[7] * mat[9] + 
+               mat[4] * mat[1] * mat[11] - 
+               mat[4] * mat[3] * mat[9] - 
+               mat[8] * mat[1] * mat[7] + 
+               mat[8] * mat[3] * mat[5];
+
+    inv[15] = mat[0] * mat[5] * mat[10] - 
+              mat[0] * mat[6] * mat[9] - 
+              mat[4] * mat[1] * mat[10] + 
+              mat[4] * mat[2] * mat[9] + 
+              mat[8] * mat[1] * mat[6] - 
+              mat[8] * mat[2] * mat[5];
+
+    det = mat[0] * inv[0] + mat[1] * inv[4] + mat[2] * inv[8] + mat[3] * inv[12];
+	
+	assert(det!=0);
+
+    det = 1.0 / det;
+
+    for (i = 0; i < 4; ++i)
+	{
+		ret.m[i].x = inv[i]*det;
+		ret.m[i].y = inv[4+i]*det;
+		ret.m[i].z = inv[8+i]*det;
+		ret.m[i].w = inv[12+i]*det;
+	}
+
+    return ret;
+}
+
+void Matrix::log()
+{
+	print("%.3f %.3f %.3f %.3f \r\n%.3f %.3f %.3f %.3f\r\n%.3f %.3f %.3f %.3f\r\n%.3f %.3f %.3f %.3f\r\n", 
+		m[0].x, m[1].x, m[2].x, m[3].x,
+		m[0].y, m[1].y, m[2].y, m[3].y,
+		m[0].z, m[1].z, m[2].z, m[3].z,
+		m[0].w, m[1].w, m[2].w, m[3].w);
+}
 
 Matrix operator* (float x, const Matrix& mat)
 {

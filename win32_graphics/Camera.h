@@ -23,7 +23,7 @@ public:
 	//camera cannot scale!!
 	
 	void setIsOrthProjection(bool);
-	void setOrthBoxSize(float);
+	void setOrthBoxHeight(float);
 	void setFieldOfView(float);
 	void setNearClippingPlane(float);
 	void setFarClippingPlane(float);
@@ -38,7 +38,7 @@ public:
 private:
 	Transform transform;
 	bool isOrthProjection;
-	float orthBoxSize;
+	float orthBoxHeight;
 	float fieldOfView;
 	float nearClippingPlane;
 	float farClippingPlane;

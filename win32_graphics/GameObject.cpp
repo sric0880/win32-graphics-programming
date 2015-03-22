@@ -12,14 +12,18 @@ GameObject::GameObject(void)
 }
 GameObject::~GameObject(void)
 {
+#ifdef _DEBUG
 	print("GameObjet destroy\r\n");
+#endif
 	releaseVertexBuffer();
 	releaseIndexBuffer();
 }
 
 GameObject::GameObject(GameObject&& obj)
 {
+#ifdef _DEBUG
 	print("GameObject copy\r\n");
+#endif
 	this->buffer = obj.buffer;
 	this->buffer_size = obj.buffer_size;
 	this->index = obj.index;
@@ -33,7 +37,9 @@ GameObject::GameObject(GameObject&& obj)
 
 GameObject& GameObject::operator= (GameObject&& obj)
 {
+#ifdef _DEBUG
 	print("GameObject assign!\r\n");
+#endif
 	//Not exception safe here!!! But it's ok
 	releaseVertexBuffer();
 	releaseIndexBuffer();
@@ -58,7 +64,8 @@ Vertex* GameObject::getVertexBuffer(int size)
 	}
 	if(!buffer && size != 0)
 	{
-		buffer = (Vertex*) malloc( sizeof(Vertex) * size);
+		//buffer = (Vertex*) malloc( sizeof(Vertex) * size);
+		buffer = new Vertex[size]; //need to call constructor
 		buffer_size = size;
 	}
 	return buffer;
@@ -102,7 +109,8 @@ int GameObject::getTriangleCount() const
 
 void GameObject::releaseVertexBuffer()
 {
-	if (buffer) free(buffer);
+	//if (buffer) free(buffer);
+	if (buffer) delete []buffer;
 	buffer = nullptr;
 	buffer_size = 0;
 }

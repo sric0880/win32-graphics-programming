@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Camera.h"
 #include <cmath>
+#include "OutputDebug.h"
 
 Camera::Camera(void):
 	isOrthProjection(false),
@@ -8,7 +9,7 @@ Camera::Camera(void):
 	isProjectPerspDirty(true),
 	isViewportDirty(true),
 	isViewDirty(false),
-	orthBoxSize(10.0f),
+	orthBoxHeight(10.0f),
 	fieldOfView(60.0f),
 	nearClippingPlane(0.3f),
 	farClippingPlane(300.0f),
@@ -26,9 +27,9 @@ void Camera::setIsOrthProjection(bool isOrth)
 {
 	isOrthProjection = isOrth;
 }
-void Camera::setOrthBoxSize(float size)
+void Camera::setOrthBoxHeight(float size)
 {
-	orthBoxSize = size;
+	orthBoxHeight = size;
 	isProjectOrthDirty = true;
 }
 void Camera::setFieldOfView(float size)
@@ -48,7 +49,7 @@ void Camera::setFarClippingPlane(float dis)
 }
 void Camera::setViewPortWidth(int w)
 {
-	if (viewPortWidth != w)
+	if (viewPortWidth != w && w != 0)
 	{
 		viewPortWidth = w;
 		widthHeightRatio = (float)viewPortHeight / w;
@@ -57,7 +58,7 @@ void Camera::setViewPortWidth(int w)
 }
 void Camera::setViewPortHeight(int h)
 {
-	if (viewPortHeight != h)
+	if (viewPortHeight != h && viewPortWidth != 0)
 	{
 		viewPortHeight = h;
 		widthHeightRatio = (float)h / viewPortWidth;
@@ -68,14 +69,12 @@ const Matrix& Camera::getViewMatrix()
 {
 	if (isViewDirty)
 	{
-		auto translation = transform.getTranslation();
-		auto eulerAngle = transform.getEulerAngle();
-		//view matrix can move camera to world origin and rotate to match origin axes
-		Transform temp;
-		temp.setTranslation(-translation.x, -translation.y, -translation.z);
-		temp.setRotation(-eulerAngle.x, -eulerAngle.y, -eulerAngle.z);
-		view = temp.getTransform();
+		view = ~transform.getTransform();
 		isViewDirty = false;
+#ifdef _DEBUG
+	print("View Matrix: \r\n");
+	view.log();
+#endif
 	}
 	return view;
 }
@@ -85,20 +84,20 @@ const Matrix& Camera::getProjectionMatrix()
 	{
 		if (isProjectOrthDirty)
 		{
-			//recalculate
-			//float xmin, ymin, xmax, ymax;
-			float height = orthBoxSize * widthHeightRatio;
-		/*	xmin = -orthBoxSize/2;
-			ymin = -height/2;
-			xmax = -xmin;
-			ymax = -ymin;*/
-			projectOrth.m[0].x = 2 / orthBoxSize;
-			projectOrth.m[1].y = 2 / height;
-			projectOrth.m[2].z = -2 / (nearClippingPlane - farClippingPlane);
+			//Same as Unity3D
+			float width = orthBoxHeight / widthHeightRatio;
+			float zrange = nearClippingPlane - farClippingPlane;
+			projectOrth.m[0].x = 2 / width;
+			projectOrth.m[1].y = 2 / orthBoxHeight;
+			projectOrth.m[2].z = 2 / zrange;
 			projectOrth.m[3].x = 0;
 			projectOrth.m[3].y = 0;
-			projectOrth.m[3].z = (nearClippingPlane + farClippingPlane) / (nearClippingPlane - farClippingPlane);
+			projectOrth.m[3].z = (nearClippingPlane + farClippingPlane) / zrange;
 			isProjectOrthDirty = false;
+#ifdef _DEBUG
+		print("Orth Projection: \r\n");
+		projectOrth.log();
+#endif	
 		}
 		return projectOrth;
 	}
@@ -106,17 +105,20 @@ const Matrix& Camera::getProjectionMatrix()
 	{
 		if (isProjectPerspDirty)
 		{
-			//投影参考点位于远点 观察平面位于近剪裁平面
-			/*float height = 2*nearClippingPlane*tan(3.14159/360*fieldOfView/2);
-			float width = height / widthHeightRatio;*/
-			float t = tan(3.14159/360*fieldOfView/2);
-			projectPersp.m[0].x = -widthHeightRatio/t;
-			projectPersp.m[1].y = -1/t;
-			projectPersp.m[2].z = (nearClippingPlane + farClippingPlane) / (nearClippingPlane - farClippingPlane);
+			//Same as Unity3D
+			float t = tan(3.14159/180*fieldOfView/2);
+			float zrange = nearClippingPlane - farClippingPlane;
+			projectPersp.m[0].x = widthHeightRatio/t;
+			projectPersp.m[1].y = 1/t;
+			projectPersp.m[2].z = (nearClippingPlane + farClippingPlane) / zrange;
 			projectPersp.m[2].w = -1;
-			projectPersp.m[3].z = 2*nearClippingPlane*farClippingPlane / (farClippingPlane - nearClippingPlane);
+			projectPersp.m[3].z = - 2*nearClippingPlane*farClippingPlane / zrange;
 			projectPersp.m[3].w = 0;
 			isProjectPerspDirty = false;
+#ifdef _DEBUG
+		print("Perspective Projection: \r\n");
+		projectPersp.log();
+#endif
 		}
 		return projectPersp;
 	}
@@ -134,6 +136,10 @@ const Matrix& Camera::getViewportMatrix()
 		viewport.m[3].z = 0.5;
 		viewport.m[3].w = 1;
 		isViewportDirty = false;
+#ifdef _DEBUG
+	print("Viewport: \r\n");
+	viewport.log();
+#endif
 	}
 	return viewport;
 }
