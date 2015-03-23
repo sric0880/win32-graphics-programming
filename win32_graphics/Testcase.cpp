@@ -19,7 +19,7 @@ void configCamera(Camera* camera)
 	camera->setFieldOfView(60);
 	camera->setOrthBoxHeight(10.0f);
 
-	camera->setTranslation(0,0,-1);
+	camera->setTranslation(0,0,-4);
 	camera->setRotation(0,0,0);
 }
 

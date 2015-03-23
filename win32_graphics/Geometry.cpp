@@ -196,7 +196,7 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 	if(y0>y1)  
 	{
 		std::swap(x0,x1);
-		std::swap(y0,y1);  
+		std::swap(y0,y1);
 	}  
 
 	if(y0>y2)  
@@ -216,8 +216,8 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 		int left = x0<x1? x0 : x1;
 		int right = x0<x1? x1 : x0;
 		data->ymin = y0;
-		float k1 = (float(y2-y0))/(x2-left);
-		float k2 = (float(y2-y0))/(x2-right);
+		float k1 = (float(x2-left)/(y2-y0));
+		float k2 = (float(x2-right))/(y2-y0);
 		scanTriangle_top(data, (float)left, (float)right, k1, k2, y0, true);
 	}
 	else if(y1 == y2)
@@ -225,8 +225,8 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 		data->ymin = y0;
 		int left = x1 < x2 ? x1 : x2;
 		int right = x1 < x2 ? x2: x1;
-		float k1 = (float(y1 - y0))/(left - x0);
-		float k2 = (float(y1 - y0))/(right - x0);
+		float k1 = (float(left - x0))/(y1 - y0);
+		float k2 = (float(right - x0))/(y1 - y0);
 		scanTriangle_bottom(data, x0, y0, k1, k2, y1);
 	}
 	else
