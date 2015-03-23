@@ -89,7 +89,7 @@ const Matrix& Camera::getProjectionMatrix()
 			float zrange = nearClippingPlane - farClippingPlane;
 			projectOrth.m[0].x = 2 / width;
 			projectOrth.m[1].y = 2 / orthBoxHeight;
-			projectOrth.m[2].z = 2 / zrange;
+			projectOrth.m[2].z = -2 / zrange;
 			projectOrth.m[3].x = 0;
 			projectOrth.m[3].y = 0;
 			projectOrth.m[3].z = (nearClippingPlane + farClippingPlane) / zrange;
@@ -105,11 +105,10 @@ const Matrix& Camera::getProjectionMatrix()
 	{
 		if (isProjectPerspDirty)
 		{
-			//Same as Unity3D
 			float t = tan(3.14159/180*fieldOfView/2);
 			float zrange = nearClippingPlane - farClippingPlane;
-			projectPersp.m[0].x = widthHeightRatio/t;
-			projectPersp.m[1].y = 1/t;
+			projectPersp.m[0].x = - widthHeightRatio/t;
+			projectPersp.m[1].y = - 1/t;
 			projectPersp.m[2].z = (nearClippingPlane + farClippingPlane) / zrange;
 			projectPersp.m[2].w = -1;
 			projectPersp.m[3].z = - 2*nearClippingPlane*farClippingPlane / zrange;
@@ -130,7 +129,7 @@ const Matrix& Camera::getViewportMatrix()
 	{
 		viewport.m[0].x = viewPortWidth*0.5;
 		viewport.m[1].y = viewPortHeight*0.5;
-		viewport.m[2].z = 0.5;
+		viewport.m[2].z = -0.5;
 		viewport.m[3].x = viewPortWidth*0.5;
 		viewport.m[3].y = viewPortHeight*0.5;
 		viewport.m[3].z = 0.5;

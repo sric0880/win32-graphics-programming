@@ -1,6 +1,97 @@
 #include "stdafx.h"
 #include "Geometry.h"
 #include <cmath>
+#include <bitset>
+
+bool crossPlane(float destx, float f1, float f2, float& u, float f3, float f4, float f5, float f6)
+{
+	u = (destx - f1) / (f2 - f1);
+	if (u > 0 && u < 1)
+	{
+		float r = f3 + (f4 - f3)*u;
+		if (r > -1 && r < 1)
+		{
+			r = f5 + (f6 - f5)*u;
+			if (r > -1 && r < 1) return true;
+		}
+	}
+	return false;
+}
+int clippingLine(const Vertex* v1, const Vertex* v2, float* linearValues)
+{
+	int c = 0;
+	float u = 0;
+	if (crossPlane(-1, v1->position.x, v2->position.x, u, v1->position.y, v2->position.y, v1->position.z, v2->position.z))
+	{
+		linearValues[c++] = u;
+	}
+	if (crossPlane(1, v1->position.x, v2->position.x, u, v1->position.y, v2->position.y, v1->position.z, v2->position.z))
+	{
+		linearValues[c++] = u;
+		if (c == 2) return c;
+	}
+	if (crossPlane(-1, v1->position.y, v2->position.y, u, v1->position.x, v2->position.x, v1->position.z, v2->position.z))
+	{
+		linearValues[c++] = u;
+		if (c == 2) return c;
+	}
+	if (crossPlane(1, v1->position.y, v2->position.y, u, v1->position.x, v2->position.x, v1->position.z, v2->position.z))
+	{
+		linearValues[c++] = u;
+		if (c == 2) return c;
+	}
+	if (crossPlane(-1, v1->position.z, v2->position.z, u, v1->position.y, v2->position.y, v1->position.x, v2->position.x))
+	{
+		linearValues[c++] = u;
+		if (c == 2) return c;
+	}
+	if (crossPlane(1, v1->position.z, v2->position.z, u, v1->position.y, v2->position.y, v1->position.x, v2->position.x))
+	{
+		linearValues[c++] = u;
+		if (c == 2) return c;
+	}
+	return c;
+}
+inline void clippingTriangle_constructBitSet(const Vertex* v, std::bitset<6> & code)
+{
+	if (v->position.x < -1) code[0] = 1;	//left
+	if (v->position.x > 1) code[1] = 1;		//right
+	if (v->position.y > 1) code[2] = 1;		//up
+	if (v->position.y < -1) code[3] = 1;	//down
+	if (v->position.z < -1) code[4] = 1;	//near
+	if (v->position.z > 1) code[5] = 1;		//far
+}
+void clippingTriangle_(std::bitset<6>& code1, std::bitset<6>& code2, const Vertex* v1, const Vertex* v2, Vertex* out, int& c)
+{
+	if ( code1.none() ) { //inside box
+		out[c++] = *v1;
+	}
+	if ((code1 & code2) == 0) { // maybe cross box
+		float linearValues[2] = {0};
+		int dotCount = clippingLine(v1, v2, linearValues);
+		if (dotCount == 2 && linearValues[1] < linearValues[0]) std::swap(linearValues[0], linearValues[1]);
+		for (int i = 0; i < dotCount; ++i)
+		{
+			out[c++].position = v1->position + (v2->position - v1->position) * linearValues[i];
+			out[c].color = v1->color + (v2->color - v1->color) * linearValues[i];
+			out[c].normal = v1->normal + (v2->normal - v1->normal) * linearValues[i];
+			out[c].texCoord = v1->texCoord + (v2->texCoord - v1->texCoord) * linearValues[i];
+		}
+	}
+}
+int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Vertex* out)
+{
+	std::bitset<6> code[3] = { 0,0,0 };
+	clippingTriangle_constructBitSet(v1, code[0]);
+	clippingTriangle_constructBitSet(v2, code[1]);
+	clippingTriangle_constructBitSet(v3, code[2]);
+	//test
+	int c = 0;
+	clippingTriangle_(code[0], code[1], v1, v2, out, c);
+	clippingTriangle_(code[1], code[2], v2, v3, out, c);
+	clippingTriangle_(code[2], code[0], v3, v1, out, c);
+	return c;
+}
 
 ///////
 //Draw line agorithms (not contain start and end)
@@ -63,7 +154,8 @@ int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* e
 	return steps;
 }
 
-//Èý½ÇÐÎÌî³äËã·¨
+// scan-line algorithm
+
 void scanTriangle_top(FillData* data, float left, float right, float k1, float k2, int ymin, bool pushFirstLine)
 {
 	if(data->ymin > ymin) data->ymin = ymin;
@@ -72,8 +164,8 @@ void scanTriangle_top(FillData* data, float left, float right, float k1, float k
 		if(pushFirstLine) {
 			data->lines.push_back(Line((int)left, (int)right));
 			data->fragmentsCount+=((int)right-(int)left+1);
-			pushFirstLine = true;
 		}
+		pushFirstLine = true;
 		left += k1;
 		right += k2;
 		if (left >= right) break;
@@ -141,14 +233,14 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 	{
 		data->ymin = y0;
 		if (x1 < x2) 
-			scanTriangle_bottom(data, x0, y0, (float(y1-y0))/(x1 - x0), (float(y2-y0))/(x2-x0), y1);
+			scanTriangle_bottom(data, x0, y0, (float(x1 - x0))/(y1-y0), (float(x2-x0))/(y2-y0), y1);
 		else 
-			scanTriangle_bottom(data, x0, y0,  (float(y2-y0))/(x2-x0), (float(y1-y0))/(x1 - x0), y1);
+			scanTriangle_bottom(data, x0, y0,  (float(x2-x0))/(y2-y0), (float(x1 - x0))/(y1-y0), y1);
 
 		float x = x0+ 0.5f + (float)1.0f*(y1-y0)*(x2-x0)/(y2-y0);
 		if (x1 < x2)
-			scanTriangle_top(data,  (float)x1, x, (float(y2-y1))/(x2 - x1), (float(y2-y0))/(x2-x0), y1, false);
+			scanTriangle_top(data,  (float)x1, x, (float(x2 - x1))/(y2-y1), (float(x2-x0))/(y2-y0), y1, false);
 		else 
-			scanTriangle_top(data,  x, (float)x1, (float(y2-y0))/(x2 - x0), (float(y2-y1))/(x2-x1), y1, false);
+			scanTriangle_top(data,  x, (float)x1, (float(x2 - x0))/(y2-y0), (float(x2-x1))/(y2-y1), y1, false);
 	}
 }

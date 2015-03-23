@@ -31,7 +31,7 @@ void buildScene(Scene* scene)
 	scene->addGameObject(Cube());
 	//scene->addGameObject(Sphere());
 
-	scene->isDrawline = true;
+	scene->isDrawline = false;
 }
 
 GameObject Quad()
@@ -48,8 +48,8 @@ GameObject Quad()
 	int index[] = {0,1,2, 0,2,3};
 	memcpy(ibuffer, index, sizeof(int) * 6);
 
-	go.transform.setTranslation(-3,0,2);
-	go.transform.setRotation(30,0,0);
+	go.transform.setTranslation(0,0,2);
+	go.transform.setRotation(0,0,20);
 	go.transform.setScale(2,2,2);
 
 	return go;
@@ -80,7 +80,7 @@ GameObject Cube()
 
 	memcpy(ibuffer, index, sizeof(int) * 36);
 
-	go.transform.setTranslation(4,-2, 3);
+	go.transform.setTranslation(0, 0, 2);
 	go.transform.setRotation(45,45,45);
 	go.transform.setScale(1,1,1);
 

@@ -44,7 +44,7 @@ private:
 	// return fragments size
 	// 1. clipping
 	// 2. rasterization and interpolation
-	int generateFragment(Vertex* v1, Vertex* v2, Vertex* v3);
+	int generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3);
 
 	// 1. texture mapping
 	// 2. per pixel lighting

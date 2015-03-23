@@ -17,7 +17,7 @@ struct Vector
 	Vector operator- (const Vector& vec) const;
 	Vector operator* (float scale) const;
 
-	void log();
+	void log() const;
 };
 
 struct Matrix
@@ -40,7 +40,7 @@ struct Matrix
 	Matrix operator* (float x) const;
 	Matrix operator/ (float x) const;
 	Matrix operator~ () const;
-	void log();
+	void log() const;
 
 	static void identityMatrix(Matrix& m)
 	{

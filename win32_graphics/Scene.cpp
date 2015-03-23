@@ -49,7 +49,15 @@ void Scene::drawScene(HDC hdc, int w, int h)
 		transform.log();
 #endif
 		modelViewMatrix = camera->getViewMatrix() * transform;
+#ifdef _DEBUG
+		print("model view matrix: \r\n");
+		modelViewMatrix.log();
+#endif
 		projModelViewMatrix = camera->getProjectionMatrix() * modelViewMatrix;
+#ifdef _DEBUG
+		print("total projmodelview matrix: \r\n");
+		projModelViewMatrix.log();
+#endif
 		render(ptr_object);
 		drawPixels(hdc);
 	}
@@ -74,20 +82,31 @@ void Scene::render(const GameObject& ptr_obj) //gameobject must be const
 	int countOfTriangles = ptr_obj.getTriangleCount();
 	for (int i = 0; i < countOfTriangles; ++i)
 	{
-		int size = generateFragment(
+		Vertex output[6]; // max count == 6 && min count == 3
+		//start clipping
+		int count = clippingTriangle(
 			vertexBuffer + ptr_obj.getIndexAt(3*i),
 			vertexBuffer + ptr_obj.getIndexAt(3*i+1),
-			vertexBuffer + ptr_obj.getIndexAt(3*i+2));
-		print("fragments size: %d", size);
-		processFragment(size);
-		depthTest(size);
+			vertexBuffer + ptr_obj.getIndexAt(3*i+2), output);
+		count -= 2;
+		for (int j = 0; j < count; ++j)
+		{
+			int size = generateFragment(output[0], output[j+1], output[j+2] );
+			print("fragments size: %d", size);
+			processFragment(size);
+			depthTest(size);
+		}
 	}
 }
 
 void Scene::processVertex(const Vertex* input, Vertex* output)
 {
 	// projection modelview transform
+/*	print("before vertex transform: \r\n");
+	input->position.log()*/;
 	output->position = projModelViewMatrix * input->position;
+	//print("after vertex transform : \r\n");
+	//output->position.log();
 
 	//TODO: transform normal to camera space then normalize
 
@@ -98,23 +117,17 @@ void Scene::processVertex(const Vertex* input, Vertex* output)
 	output->texCoord = input->texCoord;
 }
 
-int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
+int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 {
 	if (!allFragments)
 	{
 		allFragments = (Fragment*)malloc(sizeof(Fragment)*fragmentsSize);
 	}
-	//TODO: clipping transformation
 
 	// transform to view port
-	Vector pos1 = camera->getViewportMatrix() * v1->position;
-	Vector pos2 = camera->getViewportMatrix() * v2->position;
-	Vector pos3 = camera->getViewportMatrix() * v3->position;
-
-
-	pos1.log();
-	pos2.log();
-	pos3.log();
+	Vector pos1 = camera->getViewportMatrix() * v1.position;
+	Vector pos2 = camera->getViewportMatrix() * v2.position;
+	Vector pos3 = camera->getViewportMatrix() * v3.position;
 
 	//Draw line
 	if (isDrawline)
@@ -122,6 +135,7 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 		int count = max( fabs(pos1.x - pos2.x), fabs(pos1.y - pos2.y));
 		count += max( fabs(pos1.x - pos3.x), fabs(pos1.y - pos3.y));
 		count += max( fabs(pos3.x - pos2.x), fabs(pos3.y - pos2.y));
+		count += 3; // for safe
 		if (count > fragmentsSize)
 		{
 			resizeFragments(count);
@@ -145,7 +159,6 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 			allFragments[i].color.z = 0;
 			allFragments[i].color.w = 0;
 		}
-
 		return c;
 	}
 	else
@@ -156,7 +169,7 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 		
 		//2. Rasterization
 		FillData data;
-		scanTriangle(&data, v1->position, v2->position, v3->position);
+		scanTriangle(&data, pos1, pos2, pos3);
 		if(data.fragmentsCount > fragmentsSize)
 		{
 			resizeFragments(data.fragmentsCount);
@@ -176,23 +189,24 @@ int Scene::generateFragment(Vertex* v1, Vertex* v2, Vertex* v3)
 
 		//3. Interpolation
 		Matrix mat;
-		mat.m[0].x = v1->position.x;
-		mat.m[1].x = v2->position.x;
-		mat.m[2].x = v3->position.x;
-		mat.m[0].y = v1->position.y;
-		mat.m[1].y = v2->position.y;
-		mat.m[2].y = v3->position.y;
+		mat.m[0].x = pos1.x;
+		mat.m[1].x = pos2.x;
+		mat.m[2].x = pos3.x;
+		mat.m[0].y = pos1.y;
+		mat.m[1].y = pos2.y;
+		mat.m[2].y = pos3.y;
 		mat.m[0].z = 1;
 		mat.m[1].z = 1;
 		mat.m[2].z = 1;
+		Matrix interpolationMatrix = ~mat;
 		for(int i = 0; i < c; ++i)
 		{
 			Vector v(allFragments[i].x, allFragments[i].y, 1);
-			Vector interp = ~mat * v;
-			allFragments[i].color = v1->color * interp.x + v2->color * interp.y + v3->color * interp.z;
-			allFragments[i].normal = v1->normal * interp.x + v2->normal * interp.y + v3->normal * interp.z;
-			allFragments[i].texCoord = v1->texCoord * interp.x + v2->texCoord * interp.y + v3->texCoord * interp.z;
-			allFragments[i].depth = v1->position.z * interp.x + v2->position.z * interp.y + v3->position.z * interp.z;
+			Vector interp = interpolationMatrix * v;
+			allFragments[i].color = v1.color * interp.x + v2.color * interp.y + v3.color * interp.z;
+			allFragments[i].normal = v1.normal * interp.x + v2.normal * interp.y + v3.normal * interp.z;
+			allFragments[i].texCoord = v1.texCoord * interp.x + v2.texCoord * interp.y + v3.texCoord * interp.z;
+			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
 		}
 		return c;
 	}
@@ -217,7 +231,8 @@ void Scene::depthTest(int size)
 	for (int i = 0; i < size; ++i)
 	{
 		auto& frame = allFragments[i];
-		int index = 3*bufferIndex(frame.x, frame.y, w, h);
+		int index_ = bufferIndex(frame.x, frame.y, w, h);
+		int index = 3*index_;
 		if (isDrawline) //not need test depth
 		{
 			//update to frame buffer
@@ -225,9 +240,9 @@ void Scene::depthTest(int size)
 			frameBuffer[index + 1] = allFragments[i].color.y * 0xff;
 			frameBuffer[index + 2] = allFragments[i].color.z * 0xff;
 		}
-		else if (depthBuffer[index] < allFragments[i].depth)
+		else if (depthBuffer[index_] < allFragments[i].depth)
 		{
-			depthBuffer[index] = allFragments[i].depth;
+			depthBuffer[index_] = allFragments[i].depth;
 
 			//update to frame buffer
 			frameBuffer[index] = allFragments[i].color.x * 0xff;
@@ -294,7 +309,7 @@ void Scene::clearFrameBuffer()
 void Scene::clearDepthBuffer()
 {
 	if(depthBuffer)
-		memset(depthBuffer, -1, depthbufferSize);
+		memset(depthBuffer, 0, depthbufferSize);
 }
 void Scene::releaseFrameBuffer()
 {
@@ -311,10 +326,10 @@ void Scene::releaseDepthBuffer()
 
 inline int Scene::bufferIndex(int x, int y, int viewportWidth, int viewportHeight)
 {
-	return viewportWidth * (y -1) + x;
+	return viewportWidth * y + x ;
 }
 
 inline int Scene::windowCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight)
 {
-	return viewportWidth* (viewportHeight - y -1) + x;
+	return viewportWidth* (viewportHeight - y) + x;
 }

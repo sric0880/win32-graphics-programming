@@ -98,9 +98,9 @@ Vector Transform::quaternionToEulerAngle(const Vector& q1)
 	//v.x = asin(2*(q1.w*q1.y - q1.z*q1.x));
 	//v.z = atan2(2*q1.w*q1.z+2*q1.x*q1.y , 1 - 2*sqy - 2*sqz);
 	
-	v.y = atan2(2*q1.w*q1.z-2*q1.x*q1.y , 1 - 2*sqx - 2*sqz);
+	v.z = atan2(2*q1.w*q1.z-2*q1.x*q1.y , 1 - 2*sqx - 2*sqz);
 	v.x = asin(2*(q1.w*q1.x + q1.y*q1.z));
-	v.z = atan2(2*q1.w*q1.y-2*q1.x*q1.z , 1 - 2*sqx - 2*sqy);
+	v.y = atan2(2*q1.w*q1.y-2*q1.x*q1.z , 1 - 2*sqx - 2*sqy);
 
 	v.x = toDegree(v.x);
 	v.y = toDegree(v.y);
@@ -125,12 +125,12 @@ Vector Transform::eulerAngleToQuaternion(const Vector& e)
     float s3 = sin(z/2);*/
 
 	//In YXZ order
-	float c1 = cos(y/2);
-    float s1 = sin(y/2);
+	float c1 = cos(z/2);
+    float s1 = sin(z/2);
     float c2 = cos(x/2);
     float s2 = sin(x/2);
-    float c3 = cos(z/2);
-    float s3 = sin(z/2);
+    float c3 = cos(y/2);
+    float s3 = sin(y/2);
 
     float c1c2 = c1*c2;
     float s1s2 = s1*s2;

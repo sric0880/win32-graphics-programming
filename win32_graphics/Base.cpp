@@ -15,11 +15,11 @@ void Vector::normalize()
 }
 Vector Vector::operator+ (const Vector& vec) const
 {
-	return Vector ( x + vec.x, y + vec.y, z + vec.z, w + vec.w );
+	return Vector ( x + vec.x, y + vec.y, z + vec.z);
 }
 Vector Vector::operator- (const Vector& vec) const
 {
-	return Vector ( x - vec.x, y - vec.y, z - vec.z, w - vec.w );
+	return Vector ( x - vec.x, y - vec.y, z - vec.z);
 }
 Vector Vector::operator* (float scale) const
 {
@@ -27,13 +27,13 @@ Vector Vector::operator* (float scale) const
 }
 Vector Vector::dotProduct (const Vector& vec) const
 {
-	return Vector ( x * vec.x, y * vec.y, z * vec.z, w * vec.w );
+	return Vector ( x * vec.x, y * vec.y, z * vec.z);
 }
 Vector Vector::crossProduct(const Vector& vec) const
 {
 	return Vector(y*vec.z - z*vec.y, z*vec.x - x*vec.z, x*vec.y - y*vec.x);
 }
-void Vector::log()
+void Vector::log() const
 {
 	print("x: %.3f, y: %.3f, z: %.3f, w: %.3f\r\n", x, y, z, w);
 }
@@ -312,7 +312,7 @@ Matrix Matrix::operator~() const
     return ret;
 }
 
-void Matrix::log()
+void Matrix::log() const
 {
 	print("%.3f %.3f %.3f %.3f \r\n%.3f %.3f %.3f %.3f\r\n%.3f %.3f %.3f %.3f\r\n%.3f %.3f %.3f %.3f\r\n", 
 		m[0].x, m[1].x, m[2].x, m[3].x,
