@@ -29,7 +29,7 @@ void buildScene(Scene* scene)
 {
 	configCamera(scene->mainCamera());
 
-	//scene->addGameObject(Cube());
+	scene->addGameObject(Cube());
 	scene->addGameObject(Quad());
 	//scene->addGameObject(Sphere());
 

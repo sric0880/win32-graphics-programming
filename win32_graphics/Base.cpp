@@ -33,6 +33,16 @@ Vector Vector::crossProduct(const Vector& vec) const
 {
 	return Vector(y*vec.z - z*vec.y, z*vec.x - x*vec.z, x*vec.y - y*vec.x);
 }
+Vector& Vector::operator*= (float scale)
+{
+	x *= scale; y *= scale; z *= scale;
+	return *this;
+}
+Vector& Vector::operator/= (float scale)
+{
+	x /= scale; y /= scale; z /= scale;
+	return *this;
+}
 void Vector::log() const
 {
 	print("x: %.3f, y: %.3f, z: %.3f, w: %.3f\r\n", x, y, z, w);

@@ -16,6 +16,8 @@ struct Vector
 	Vector operator+ (const Vector& vec) const;
 	Vector operator- (const Vector& vec) const;
 	Vector operator* (float scale) const;
+	Vector& operator*= (float scale);
+	Vector& operator/= (float scale);
 
 	void log() const;
 };
@@ -61,6 +63,7 @@ struct Vertex
 	Vector color;
 	Vector texCoord;
 	Vector normal;
+	Vector eye; //point to eye(camera) in camera space.
 };
 
 struct Fragment

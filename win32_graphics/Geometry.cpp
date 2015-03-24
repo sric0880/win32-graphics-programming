@@ -76,6 +76,7 @@ void clippingTriangle_(std::bitset<6>& code1, std::bitset<6>& code2, const Verte
 			out[c].color = v1->color + (v2->color - v1->color) * linearValues[i];
 			out[c].normal = v1->normal + (v2->normal - v1->normal) * linearValues[i];
 			out[c].texCoord = v1->texCoord + (v2->texCoord - v1->texCoord) * linearValues[i];
+			out[c].eye = v1->eye + (v2->eye - v1->eye) * linearValues[i];
 			++c;
 		}
 	}
@@ -99,7 +100,7 @@ bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 {
 	Vector n = (v2.position - v1.position).crossProduct(v3.position - v1.position);
 	// v1 already in camera space
-	return (-1 * v1.position).dotProduct(n) >= 0;
+	return v1.eye.dotProduct(n) <= 0;
 }
 ///////
 //Draw line agorithms (not contain start and end)

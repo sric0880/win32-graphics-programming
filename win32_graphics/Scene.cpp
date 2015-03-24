@@ -108,8 +108,8 @@ void Scene::processVertex(const Vertex* input, Vertex* output)
 	// projection modelview transform
 /*	print("before vertex transform: \r\n");
 	input->position.log()*/;
-	Vector posInCameraView = modelViewMatrix * input->position;
-	output->position = camera->getProjectionMatrix() * posInCameraView;
+	output->eye = -1 * modelViewMatrix * input->position;
+	output->position = projModelViewMatrix * input->position;
 	//print("after vertex transform : \r\n");
 	//output->position.log();
 
@@ -120,11 +120,13 @@ void Scene::processVertex(const Vertex* input, Vertex* output)
 	output->color = input->color;
 	output->normal = input->normal;
 
-	if (!camera->getIsOrthProjection()){
-		output->texCoord = input->texCoord  * (output->position.z);
-	}
-	else {
+	if (camera->getIsOrthProjection())
+	{
 		output->texCoord = input->texCoord;
+	}
+	else
+	{
+		output->texCoord = input->texCoord  * (-1.0f/output->eye.z);
 	}
 }
 
@@ -223,10 +225,16 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
 
 			//Texture Coord interpolation
-			//allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord* interp.y + v3.texCoord* interp.z);
-			allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord * interp.y + v3.texCoord * interp.z) * (0.5 / (allFragments[i].depth-0.5f));
+			if (camera->getIsOrthProjection())
+			{
+				allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord* interp.y + v3.texCoord* interp.z);
+			}
+			else 
+			{
+				float zr = -1.0f / (1.0f/v1.eye.z*interp.x + 1.0f/v2.eye.z*interp.y + 1.0f/v3.eye.z*interp.z);
+				allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord * interp.y + v3.texCoord * interp.z) * zr;
+			}
 			clerp(0, 1, allFragments[i].texCoord);
-			
 		}
 		return c;
 	}
