@@ -11,7 +11,7 @@ struct Vector
 	Vector(float _x, float _y, float _z, float _w = 1):x(_x), y(_y), z(_z), w(_w){}
 	float length();
 	void normalize();
-	Vector dotProduct (const Vector& vec) const;
+	float dotProduct (const Vector& vec) const;
 	Vector crossProduct(const Vector& vec) const;
 	Vector operator+ (const Vector& vec) const;
 	Vector operator- (const Vector& vec) const;

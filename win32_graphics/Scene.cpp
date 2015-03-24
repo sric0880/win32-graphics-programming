@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Scene.h"
 #include "Geometry.h"
+#include "Texture2D.h"
 
 #include "OutputDebug.h"
 
@@ -59,14 +60,14 @@ void Scene::drawScene(HDC hdc, int w, int h)
 		projModelViewMatrix.log();
 #endif
 		render(ptr_object);
-		drawPixels(hdc);
 	}
+	drawPixels(hdc);
 }
 
 // draw buffer contains position, normal, color, texcoord that can put into triangles using index
-void Scene::render(const GameObject& ptr_obj) //gameobject must be const
+void Scene::render(const GameObject& obj) //gameobject must be const
 {
-	int vertexCount = ptr_obj.getVertexCount();
+	int vertexCount = obj.getVertexCount();
 	if (!vertexBuffer)
 	{
 		vertexBuffer = (Vertex*)malloc(sizeof(Vertex)* vertexCount);
@@ -77,23 +78,26 @@ void Scene::render(const GameObject& ptr_obj) //gameobject must be const
 	}
 	for (int i = 0; i < vertexCount; ++i)
 	{
-		processVertex(ptr_obj.getVertexAt(i), vertexBuffer + i);
+		processVertex(obj.getVertexAt(i), vertexBuffer + i);
 	}
-	int countOfTriangles = ptr_obj.getTriangleCount();
+	int countOfTriangles = obj.getTriangleCount();
 	for (int i = 0; i < countOfTriangles; ++i)
 	{
-		Vertex output[6]; // max count == 6 && min count == 3
+		//backface culling
+		Vertex* v1 = vertexBuffer + obj.getIndexAt(3 * i);
+		Vertex* v2 = vertexBuffer + obj.getIndexAt(3 * i + 1);
+		Vertex* v3 = vertexBuffer + obj.getIndexAt(3 * i + 2);
+		if (isBackface(*v1, *v2, *v3)) continue;
+
 		//start clipping
-		int count = clippingTriangle(
-			vertexBuffer + ptr_obj.getIndexAt(3*i),
-			vertexBuffer + ptr_obj.getIndexAt(3*i+1),
-			vertexBuffer + ptr_obj.getIndexAt(3*i+2), output);
+		Vertex output[6]; // max count == 6 && min count == 3
+		int count = clippingTriangle(v1, v2, v3, output);
 		count -= 2;
 		for (int j = 0; j < count; ++j)
 		{
 			int size = generateFragment(output[0], output[j+1], output[j+2] );
 			print("fragments size: %d", size);
-			processFragment(size);
+			processFragment(size, obj.getTexture2D());
 			depthTest(size);
 		}
 	}
@@ -104,7 +108,8 @@ void Scene::processVertex(const Vertex* input, Vertex* output)
 	// projection modelview transform
 /*	print("before vertex transform: \r\n");
 	input->position.log()*/;
-	output->position = projModelViewMatrix * input->position;
+	Vector posInCameraView = modelViewMatrix * input->position;
+	output->position = camera->getProjectionMatrix() * posInCameraView;
 	//print("after vertex transform : \r\n");
 	//output->position.log();
 
@@ -114,7 +119,13 @@ void Scene::processVertex(const Vertex* input, Vertex* output)
 
 	output->color = input->color;
 	output->normal = input->normal;
-	output->texCoord = input->texCoord;
+
+	if (!camera->getIsOrthProjection()){
+		output->texCoord = input->texCoord  * (output->position.z);
+	}
+	else {
+		output->texCoord = input->texCoord;
+	}
 }
 
 int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3)
@@ -165,9 +176,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 	//Draw triangles
 	// rasterization and interpolation
 	{
-		//TODO: 1. culling
-		
-		//2. Rasterization
+		//Rasterization
 		FillData data;
 		scanTriangle(&data, pos1, pos2, pos3);
 		if(data.fragmentsCount > fragmentsSize)
@@ -187,7 +196,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			++y;
 		}
 
-		//3. Interpolation
+		//Interpolation
 		Matrix mat;
 		mat.m[0].x = pos1.x;
 		mat.m[1].x = pos2.x;
@@ -201,26 +210,41 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		Matrix interpolationMatrix = ~mat;
 		for(int i = 0; i < c; ++i)
 		{
-			Vector v(allFragments[i].x, allFragments[i].y, 1);
-			Vector interp = interpolationMatrix * v;
+			Vector interp = interpolationMatrix * Vector(allFragments[i].x, allFragments[i].y, 1);
+			//Color interpolation
 			allFragments[i].color = v1.color * interp.x + v2.color * interp.y + v3.color * interp.z;
+			clerp(0, 1, allFragments[i].color);
+			
+			//Normal interpolation
 			allFragments[i].normal = v1.normal * interp.x + v2.normal * interp.y + v3.normal * interp.z;
-			allFragments[i].texCoord = v1.texCoord * interp.x + v2.texCoord * interp.y + v3.texCoord * interp.z;
+			
+			//Depth interpolation
+			//z is not linear but 1/z is linear!
 			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
+
+			//Texture Coord interpolation
+			//allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord* interp.y + v3.texCoord* interp.z);
+			allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord * interp.y + v3.texCoord * interp.z) * (0.5 / (allFragments[i].depth-0.5f));
+			clerp(0, 1, allFragments[i].texCoord);
+			
 		}
 		return c;
 	}
 }
 
-void Scene::processFragment(int size)
+void Scene::processFragment(int size, const Texture2D* tex)
 {
 	for(int i = 0; i < size; ++i)
 	{
-		//TODO: Texture mapping
-
+		Fragment& frag = allFragments[i];
+		//Texture mapping
+		if (!tex->isEmpty())
+		{
+			frag.color = tex->sampleTexture2D(frag.texCoord.x, frag.texCoord.y);
+		}
+			
 		//TODO: Lighting per pixel
 
-		//allFragments[0].color =  //	
 	}
 }
 
@@ -240,7 +264,7 @@ void Scene::depthTest(int size)
 			frameBuffer[index + 1] = allFragments[i].color.y * 0xff;
 			frameBuffer[index + 2] = allFragments[i].color.z * 0xff;
 		}
-		else if (depthBuffer[index_] < allFragments[i].depth)
+		else if (depthBuffer[index_] > allFragments[i].depth)
 		{
 			depthBuffer[index_] = allFragments[i].depth;
 
@@ -253,9 +277,9 @@ void Scene::depthTest(int size)
 }
 void Scene::drawPixels(HDC hdc)
 {
-	HDC mdc = CreateCompatibleDC(hdc);
 	int viewportWidth = camera->getViewportWidth();
 	int viewportHeight = camera->getViewportHeight();
+	HDC mdc = CreateCompatibleDC(hdc);
 	HBITMAP bitmap = CreateCompatibleBitmap(hdc, viewportWidth, viewportHeight);
 	SelectObject(mdc, bitmap);
 
@@ -308,8 +332,11 @@ void Scene::clearFrameBuffer()
 }
 void Scene::clearDepthBuffer()
 {
-	if(depthBuffer)
-		memset(depthBuffer, 0, depthbufferSize);
+	if (depthBuffer)
+	{
+		int c = depthbufferSize / 4;
+		for (int i = 0; i < c; ++i) depthBuffer[i] = 1.0f;
+	}
 }
 void Scene::releaseFrameBuffer()
 {

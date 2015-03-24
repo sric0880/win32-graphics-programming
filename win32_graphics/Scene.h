@@ -48,7 +48,7 @@ private:
 
 	// 1. texture mapping
 	// 2. per pixel lighting
-	void processFragment(int size);
+	void processFragment(int size, const Texture2D* tex);
 	void depthTest(int size);
 	void drawPixels(HDC hdc);
 

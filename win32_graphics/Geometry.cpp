@@ -72,10 +72,11 @@ void clippingTriangle_(std::bitset<6>& code1, std::bitset<6>& code2, const Verte
 		if (dotCount == 2 && linearValues[1] < linearValues[0]) std::swap(linearValues[0], linearValues[1]);
 		for (int i = 0; i < dotCount; ++i)
 		{
-			out[c++].position = v1->position + (v2->position - v1->position) * linearValues[i];
+			out[c].position = v1->position + (v2->position - v1->position) * linearValues[i];
 			out[c].color = v1->color + (v2->color - v1->color) * linearValues[i];
 			out[c].normal = v1->normal + (v2->normal - v1->normal) * linearValues[i];
 			out[c].texCoord = v1->texCoord + (v2->texCoord - v1->texCoord) * linearValues[i];
+			++c;
 		}
 	}
 }
@@ -93,6 +94,13 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 	return c;
 }
 
+//see http://en.wikipedia.org/wiki/Back-face_culling
+bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3)
+{
+	Vector n = (v2.position - v1.position).crossProduct(v3.position - v1.position);
+	// v1 already in camera space
+	return (-1 * v1.position).dotProduct(n) >= 0;
+}
 ///////
 //Draw line agorithms (not contain start and end)
 int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* end)
@@ -155,15 +163,16 @@ int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* e
 }
 
 // scan-line algorithm
-
 void scanTriangle_top(FillData* data, float left, float right, float k1, float k2, int ymin, bool pushFirstLine)
 {
 	if(data->ymin > ymin) data->ymin = ymin;
 	for(int y = ymin; ; ++y)
 	{
 		if(pushFirstLine) {
-			data->lines.push_back(Line((int)left, (int)right));
-			data->fragmentsCount+=((int)right-(int)left+1);
+			int l = std::ceilf(left);
+			int r = std::floorf(right);
+			data->lines.push_back(Line(l, r));
+			data->fragmentsCount+=(r-l+1);
 		}
 		pushFirstLine = true;
 		left += k1;
@@ -177,8 +186,10 @@ void scanTriangle_bottom(FillData* data, int x, int y, float k1, float k2, int y
 	left = right = (float)x;
 	for(int i = y; i <= ymax; ++i)
 	{
-		data->lines.push_back(Line((int)left,(int)right));
-		data->fragmentsCount+=((int)right-(int)left+1);
+		int l = std::ceilf(left);
+		int r = std::floorf(right);
+		data->lines.push_back(Line(l,r));
+		data->fragmentsCount+=(r-l+1);
 		left += k1;
 		right += k2;
 	}
@@ -190,14 +201,14 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 	int y0 = (int)p1.y; int y1 = (int)p2.y; int y2 = (int)p3.y;
 	if((x0==x1&&x1==x2)||(y0==y1&&y1==y2))
 	{
-		return;  
-	}  
+		return;
+	}
 
 	if(y0>y1)  
 	{
 		std::swap(x0,x1);
 		std::swap(y0,y1);
-	}  
+	}
 
 	if(y0>y2)  
 	{  
@@ -232,15 +243,18 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 	else
 	{
 		data->ymin = y0;
-		if (x1 < x2) 
-			scanTriangle_bottom(data, x0, y0, (float(x1 - x0))/(y1-y0), (float(x2-x0))/(y2-y0), y1);
-		else 
-			scanTriangle_bottom(data, x0, y0,  (float(x2-x0))/(y2-y0), (float(x1 - x0))/(y1-y0), y1);
+		float k1 = (float(x1 - x0)) / (y1 - y0);
+		float k2 = (float(x2 - x0)) / (y2 - y0);
+		if (k1 < k2) 
+			scanTriangle_bottom(data, x0, y0, k1, k2, y1);
+		else
+			scanTriangle_bottom(data, x0, y0, k2, k1, y1);
 
-		float x = x0+ 0.5f + (float)1.0f*(y1-y0)*(x2-x0)/(y2-y0);
-		if (x1 < x2)
+		float x = x0 + (float)1.0f*(y1-y0)*(x2-x0)/(y2-y0);
+		if (x1 < x)
 			scanTriangle_top(data,  (float)x1, x, (float(x2 - x1))/(y2-y1), (float(x2-x0))/(y2-y0), y1, false);
 		else 
 			scanTriangle_top(data,  x, (float)x1, (float(x2 - x0))/(y2-y0), (float(x2-x1))/(y2-y1), y1, false);
 	}
 }
+

@@ -2,12 +2,14 @@
 #include "GameObject.h"
 #include <cassert>
 #include <iostream>
+#include "Texture2D.h"
 
 #include "OutputDebug.h"
 
 GameObject::GameObject(void)
 	:buffer(nullptr), index(nullptr),
-	buffer_size(0), index_size(0)
+	buffer_size(0), index_size(0),
+	_texture2D(new Texture2D())
 {
 }
 GameObject::~GameObject(void)
@@ -17,6 +19,7 @@ GameObject::~GameObject(void)
 #endif
 	releaseVertexBuffer();
 	releaseIndexBuffer();
+	if (_texture2D) delete(_texture2D);
 }
 
 GameObject::GameObject(GameObject&& obj)
@@ -29,10 +32,12 @@ GameObject::GameObject(GameObject&& obj)
 	this->index = obj.index;
 	this->index_size = obj.index_size;
 	this->transform = obj.transform;
+	this->_texture2D = obj._texture2D;
 	obj.buffer = nullptr;
 	obj.buffer_size = 0;
 	obj.index = nullptr;
 	obj.index_size = 0;
+	obj._texture2D = nullptr;
 }
 
 GameObject& GameObject::operator= (GameObject&& obj)
@@ -48,10 +53,12 @@ GameObject& GameObject::operator= (GameObject&& obj)
 	this->index = obj.index;
 	this->index_size = obj.index_size;
 	this->transform = obj.transform;
+	this->_texture2D = obj._texture2D;
 	obj.buffer = nullptr;
 	obj.buffer_size = 0;
 	obj.index = nullptr;
 	obj.index_size = 0;
+	obj._texture2D = nullptr;
 	return *this;
 }
 
@@ -119,4 +126,9 @@ void GameObject::releaseIndexBuffer()
 	if (index) free(index);
 	index = nullptr;
 	index_size = 0;
+}
+
+Texture2D* GameObject::getTexture2D() const
+{
+	return _texture2D;
 }

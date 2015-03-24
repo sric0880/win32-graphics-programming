@@ -1,5 +1,6 @@
 #pragma once
 #include "Transform.h"
+class Texture2D;
 
 class GameObject
 {
@@ -23,6 +24,8 @@ public:
 	int getVertexCount() const;
 	int getTriangleCount() const;
 
+	Texture2D* getTexture2D() const;
+
 private:
 	//Don't allow copy and assign from another gameobject
 	GameObject(const GameObject&);
@@ -35,5 +38,7 @@ private:
 
 	void releaseVertexBuffer();
 	void releaseIndexBuffer();
+	
+	Texture2D* _texture2D;
 };
 

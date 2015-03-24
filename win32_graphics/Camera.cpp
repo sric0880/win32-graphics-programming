@@ -129,7 +129,7 @@ const Matrix& Camera::getViewportMatrix()
 	{
 		viewport.m[0].x = viewPortWidth*0.5;
 		viewport.m[1].y = viewPortHeight*0.5;
-		viewport.m[2].z = -0.5;
+		viewport.m[2].z = 0.5;
 		viewport.m[3].x = viewPortWidth*0.5;
 		viewport.m[3].y = viewPortHeight*0.5;
 		viewport.m[3].z = 0.5;

@@ -25,9 +25,9 @@ Vector Vector::operator* (float scale) const
 {
 	return Vector (x*scale, y*scale, z*scale);
 }
-Vector Vector::dotProduct (const Vector& vec) const
+float Vector::dotProduct (const Vector& vec) const
 {
-	return Vector ( x * vec.x, y * vec.y, z * vec.z);
+	return x * vec.x + y * vec.y + z * vec.z;
 }
 Vector Vector::crossProduct(const Vector& vec) const
 {
