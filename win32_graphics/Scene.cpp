@@ -13,7 +13,8 @@ Scene::Scene():
 	frameBuffer(nullptr),
 	depthBuffer(nullptr),
 	isDrawline(false),
-	camera(new Camera())
+	camera(new Camera()),
+	lighting(new Lighting())
 {
 	initFrameBuffer();
 	initDepthBuffer();
@@ -25,11 +26,6 @@ Scene::~Scene()
 	releaseDepthBuffer();
 	if (allFragments) free(allFragments);
 	if (vertexBuffer) free(vertexBuffer);
-}
-
-Camera* Scene::mainCamera()
-{
-	return camera.get();
 }
 
 void Scene::addGameObject(GameObject&& obj)
@@ -50,6 +46,8 @@ void Scene::drawScene(HDC hdc, int w, int h)
 		transform.log();
 #endif
 		modelViewMatrix = camera->getViewMatrix() * transform;
+		lighting->setNormalMatrix(modelViewMatrix);
+		lighting->updateViewMatrix(&camera->getViewMatrix());
 #ifdef _DEBUG
 		print("model view matrix: \r\n");
 		modelViewMatrix.log();
@@ -106,19 +104,28 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 void Scene::processVertex(const Vertex* input, Vertex* output)
 {
 	// projection modelview transform
-/*	print("before vertex transform: \r\n");
-	input->position.log()*/;
-	output->eye = -1 * modelViewMatrix * input->position;
+	output->eye = -1 * (modelViewMatrix * input->position);
 	output->position = projModelViewMatrix * input->position;
-	//print("after vertex transform : \r\n");
-	//output->position.log();
 
-	//TODO: transform normal to camera space then normalize
-
-	//TODO: lighting per vertex
-
-	output->color = input->color;
+	//first normalize the normal
+	// then transform normal to camera space (!! CANNOT USE MODELVIEW MATRIX!!)
+	//  then normalize it
 	output->normal = input->normal;
+	output->normal.normalize();
+	output->normal = lighting->getNormalMatrix() * output->normal;
+	output->normal.normalize();
+
+	//lighting per vertex
+	if (!lighting->isPerPixelLighting())
+	{
+		Vector E = output->eye;
+		E.normalize();
+		output->color = lighting->calculateLighting(output->normal, E);
+	}
+	else
+	{
+		output->color = input->color;
+	}
 
 	if (camera->getIsOrthProjection())
 	{
@@ -167,9 +174,9 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		//set all the line color to black
 		for (int i = 0; i < c; ++i)
 		{
-			allFragments[i].color.x = 0;
-			allFragments[i].color.y = 0;
-			allFragments[i].color.z = 0;
+			allFragments[i].color.x = 1;
+			allFragments[i].color.y = 1;
+			allFragments[i].color.z = 1;
 			allFragments[i].color.w = 0;
 		}
 		return c;
@@ -210,6 +217,9 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		mat.m[1].z = 1;
 		mat.m[2].z = 1;
 		Matrix interpolationMatrix = ~mat;
+		Vector e1 = v1.eye; e1.normalize();
+		Vector e2 = v2.eye; e2.normalize();
+		Vector e3 = v3.eye; e3.normalize();
 		for(int i = 0; i < c; ++i)
 		{
 			Vector interp = interpolationMatrix * Vector(allFragments[i].x, allFragments[i].y, 1);
@@ -235,6 +245,9 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 				allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord * interp.y + v3.texCoord * interp.z) * zr;
 			}
 			clerp(0, 1, allFragments[i].texCoord);
+
+			//Eye interpolation
+			allFragments[i].eye = e1 * interp.x + e2 * interp.y + e3 * interp.z;
 		}
 		return c;
 	}
@@ -245,14 +258,22 @@ void Scene::processFragment(int size, const Texture2D* tex)
 	for(int i = 0; i < size; ++i)
 	{
 		Fragment& frag = allFragments[i];
+
+		//Lighting per pixel
+		if (lighting->isPerPixelLighting())
+		{
+			frag.normal.normalize();
+			frag.eye.normalize();
+			frag.color = lighting->calculateLighting(frag.normal, frag.eye);
+		}
 		//Texture mapping
 		if (!tex->isEmpty())
 		{
-			frag.color = tex->sampleTexture2D(frag.texCoord.x, frag.texCoord.y);
+			Vector sample = tex->sampleTexture2D(frag.texCoord.x, frag.texCoord.y);
+			frag.color.x *= sample.x;
+			frag.color.y *= sample.y;
+			frag.color.z *= sample.z;
 		}
-			
-		//TODO: Lighting per pixel
-
 	}
 }
 
@@ -336,7 +357,7 @@ void Scene::initDepthBuffer()
 void Scene::clearFrameBuffer()
 {
 	if(frameBuffer)
-		memset(frameBuffer, 0xff, framebufferSize);
+		memset(frameBuffer, 0, framebufferSize);
 }
 void Scene::clearDepthBuffer()
 {

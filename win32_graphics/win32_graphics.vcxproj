@@ -81,6 +81,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="Lighting.h" />
     <ClInclude Include="OutputDebug.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Texture2D.h" />
@@ -96,6 +97,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="Lighting.cpp" />
     <ClCompile Include="OutputDebug.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Texture2D.cpp" />
@@ -113,6 +115,7 @@
   <ItemGroup>
     <Image Include="small.ico" />
     <Image Include="tex.bmp" />
+    <Image Include="tex1.bmp" />
     <Image Include="win32_graphics.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

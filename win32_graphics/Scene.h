@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera.h"
 #include "GameObject.h"
+#include "Lighting.h"
 #include <vector>
 #include <memory>
 
@@ -10,17 +11,19 @@ public:
 	Scene();
 	~Scene();
 	void drawScene(HDC hdc, int w, int h);
-	Camera* mainCamera();
+	Camera* mainCamera() { return camera.get(); }
+	Lighting* mainLighting() { return lighting.get(); }
+
 	//void addGameObject(std::shared_ptr<GameObject> obj);
 	void addGameObject(GameObject&& obj);
 	//TODO: need remove an object?
-	Vector lightDir; // direction light in camera space
-	Matrix normalMatrix;  // normal transform to camera space
 	bool isDrawline;
 private:
 	std::unique_ptr<Camera> camera;
 	//GameObject* object;
 	std::vector<GameObject> objects;
+	//Allow only one light in scene
+	std::unique_ptr<Lighting> lighting;
 	Matrix projModelViewMatrix;
 	Matrix modelViewMatrix;
 

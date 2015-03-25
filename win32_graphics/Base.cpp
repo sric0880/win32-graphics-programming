@@ -4,7 +4,9 @@
 #include <cassert>
 #include "OutputDebug.h"
 
-float Vector::length()
+const Vector Vector::zero;
+
+float Vector::length() const
 {
 	return sqrtf(x*x + y*y + z*z);
 }
@@ -320,6 +322,34 @@ Matrix Matrix::operator~() const
 	}
 
     return ret;
+}
+
+void Matrix::Tranpose(Matrix& mat)
+{
+	float temp = 0;
+	temp = mat.m[0].y;
+	mat.m[0].y = mat.m[1].x;
+	mat.m[1].x = temp;
+
+	temp = mat.m[0].z;
+	mat.m[0].z = mat.m[2].x;
+	mat.m[2].x = temp;
+	
+	temp = mat.m[0].w;
+	mat.m[0].w = mat.m[3].x;
+	mat.m[3].x = temp;
+
+	temp = mat.m[1].z;
+	mat.m[1].z = mat.m[2].y;
+	mat.m[2].y = temp;
+
+	temp = mat.m[1].w;
+	mat.m[1].w = mat.m[3].y;
+	mat.m[3].y = temp;
+
+	temp = mat.m[2].w;
+	mat.m[2].w = mat.m[3].z;
+	mat.m[3].z = temp;
 }
 
 void Matrix::log() const

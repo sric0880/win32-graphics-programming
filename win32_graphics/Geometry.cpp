@@ -100,7 +100,7 @@ bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 {
 	Vector n = (v2.position - v1.position).crossProduct(v3.position - v1.position);
 	// v1 already in camera space
-	return v1.eye.dotProduct(n) <= 0;
+	return v1.eye.dotProduct(n) > 0;
 }
 ///////
 //Draw line agorithms (not contain start and end)
