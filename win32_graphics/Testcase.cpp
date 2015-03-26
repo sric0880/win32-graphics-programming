@@ -18,9 +18,10 @@ void configCamera(Camera* camera)
 	camera->setIsOrthProjection(false);
 	camera->setFarClippingPlane(1000);
 	camera->setNearClippingPlane(0.3f);
-	camera->setFieldOfView(30);
+	camera->setFieldOfView(60);
 	camera->setOrthBoxHeight(10.0f);
 
+	camera->moveSpeed = 3;
 	camera->setTranslation(0,0,-1);
 	camera->setRotation(0,0,0);
 }
@@ -45,6 +46,7 @@ void buildScene(Scene* scene)
 	scene->addGameObject(Sphere());
 
 	scene->isDrawline = false;
+	scene->fps = 60.0f;
 }
 
 GameObject Quad()
@@ -66,6 +68,16 @@ GameObject Quad()
 	go.transform.setTranslation(-3,0,5);
 	go.transform.setRotation(10,0,0);
 	go.transform.setScale(2,2,2);
+
+	go.updateFunc = [](GameObject* go, float deltaTime)
+	{
+		const float speed = 20;
+		Vector eulerAngle = go->transform.getEulerAngle();
+		//eulerAngle.x += deltaTime * speed;
+		eulerAngle.y += deltaTime * speed;
+		//eulerAngle.z += deltaTime * speed;
+		go->transform.setRotation(eulerAngle.x, eulerAngle.y, eulerAngle.z);
+	};
 
 	return go;
 }
@@ -119,8 +131,26 @@ GameObject Cube()
 	memcpy(ibuffer, index, sizeof(int) * 36);
 
 	go.transform.setTranslation(1, 0, 6);
-	go.transform.setRotation(-40,30,70);
+	go.transform.setRotation(-30,60,70);
 	go.transform.setScale(1,1,1);
+
+	go.updateFunc = [](GameObject* go, float deltaTime)
+	{
+		const float speed = 10;
+		Vector eulerAngle = go->transform.getEulerAngle();
+		eulerAngle.x += deltaTime * speed;
+		eulerAngle.y += deltaTime * speed;
+		eulerAngle.z += deltaTime * speed;
+		go->transform.setRotation(eulerAngle.x, eulerAngle.y, eulerAngle.z);
+
+		Vector translation = go->transform.getTranslation();
+		float t = deltaTime;
+		if (translation.x > 5)
+			t = 0;
+		translation.x += t;
+
+		go->transform.setTranslation(translation.x, translation.y, translation.z);
+	};
 
 	return go;
 }
@@ -206,6 +236,24 @@ GameObject Sphere()
 	go.transform.setTranslation(3,0,4);
 	go.transform.setRotation(30,90,30);
 	go.transform.setScale(1,1,1);
+
+	go.updateFunc = [](GameObject* go, float deltaTime)
+	{
+		const float speed = 30;
+		Vector eulerAngle = go->transform.getEulerAngle();
+		eulerAngle.x += deltaTime * speed;
+		eulerAngle.y += deltaTime * speed;
+		eulerAngle.z += deltaTime * speed;
+
+		Vector translation = go->transform.getTranslation();
+		float t = deltaTime;
+		if (translation.z > 20)
+			t = 0;
+		translation.z += t;
+
+		go->transform.setRotation(eulerAngle.x, eulerAngle.y, eulerAngle.z);
+		go->transform.setTranslation(translation.x, translation.y, translation.z);
+	};
 
 	return go;
 }

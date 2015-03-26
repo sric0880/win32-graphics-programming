@@ -6,6 +6,7 @@
 #include <memory>
 #include "Scene.h"
 #include "Testcase.h"
+#include <time.h>
 
 #define MAX_LOADSTRING 100
 
@@ -127,6 +128,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY	- post a quit message and return
 //
 //
+clock_t lastUpdateTime = 0;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -135,6 +137,58 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	switch (message)
 	{
+	case WM_CREATE:
+		SetTimer(hWnd, 1, 1.0f/scene.fps, NULL);
+		break;
+	case WM_TIMER:
+	{
+		float deltaTime = 0;
+		clock_t currentUpdateTime = clock();
+		if (lastUpdateTime == 0)
+			deltaTime = 0;
+		else
+		{
+			deltaTime = 1.0f*(currentUpdateTime - lastUpdateTime) / CLOCKS_PER_SEC;
+		}
+		lastUpdateTime = currentUpdateTime;
+		scene.update(deltaTime);
+		InvalidateRect(hWnd, NULL, false);
+		break;
+	}
+	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case 'W':
+			scene.onKey();
+			break;
+		case 'S':
+			scene.onKey();
+			break;
+		case 'A':
+			scene.onKey();
+			break;
+		case 'D':
+			scene.onKey();
+			break;
+		}
+		break;
+	case WM_CHAR:
+		switch (wParam)
+		{
+		case 'W':
+			scene.onKey();
+			break;
+		case 'S':
+			scene.onKey();
+			break;
+		case 'A':
+			scene.onKey();
+			break;
+		case 'D':
+			scene.onKey();
+			break;
+		}
+		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
@@ -154,14 +208,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		{
 		hdc = BeginPaint(hWnd, &ps);
-		
 		// Drawing code
 		RECT clientRect;
 		GetClientRect(hWnd, &clientRect);
 		int w = clientRect.right - clientRect.left;
 		int h = clientRect.bottom - clientRect.top;
 		scene.drawScene(hdc, w, h);
-
+		scene.onGUI(hdc);
 		EndPaint(hWnd, &ps);
 		break;
 		}

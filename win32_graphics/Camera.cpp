@@ -15,7 +15,8 @@ Camera::Camera(void):
 	farClippingPlane(300.0f),
 	viewPortHeight(0),
 	viewPortWidth(0),
-	widthHeightRatio(1)
+	widthHeightRatio(1),
+	moveSpeed(2)
 {
 }
 

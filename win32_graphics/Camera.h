@@ -7,7 +7,6 @@ public:
 	Camera(void);
 	~Camera(void);
 
-	
 	void setTranslation(float x, float y, float z)
 	{
 		transform.setTranslation(x, y, z);
@@ -36,6 +35,7 @@ public:
 	int getViewportWidth() const;
 	int getViewportHeight() const;
 	
+	float moveSpeed;
 private:
 	Transform transform;
 	bool isOrthProjection;

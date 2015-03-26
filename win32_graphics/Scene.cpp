@@ -14,7 +14,9 @@ Scene::Scene():
 	depthBuffer(nullptr),
 	isDrawline(false),
 	camera(new Camera()),
-	lighting(new Lighting())
+	lighting(new Lighting()),
+	fps(60),
+	actualFps(60)
 {
 	initFrameBuffer();
 	initDepthBuffer();
@@ -28,9 +30,37 @@ Scene::~Scene()
 	if (vertexBuffer) free(vertexBuffer);
 }
 
+void Scene::onGUI(HDC hdc)
+{
+	WCHAR str[20];
+	swprintf(str, L"FPS: %f", actualFps);
+	TextOut(hdc, 10, 10, str, wcslen(str));
+}
+
+float Scene::getActualFps()
+{
+	return actualFps;
+}
+
 void Scene::addGameObject(GameObject&& obj)
 {
 	objects.emplace_back(std::forward<GameObject&&>(obj));
+}
+void Scene::update(float deltaTime)
+{
+	//update camera
+	//TODO:  
+
+	camera->moveSpeed = 0;
+
+	//update objects
+	if (deltaTime != 0)
+		actualFps = 1.0f / deltaTime;
+	for (auto& gameobject : objects)
+	{
+		if (gameobject.updateFunc)
+			gameobject.updateFunc(&gameobject, deltaTime);
+	}
 }
 void Scene::drawScene(HDC hdc, int w, int h)
 {
@@ -73,6 +103,7 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 	}else if (vertexBufferSize < vertexCount)
 	{
 		resizeVertexBuffer(vertexCount);
+		if (vertexBufferSize == 0) return;
 	}
 	for (int i = 0; i < vertexCount; ++i)
 	{
@@ -94,7 +125,7 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 		for (int j = 0; j < count; ++j)
 		{
 			int size = generateFragment(output[0], output[j+1], output[j+2] );
-			print("fragments size: %d", size);
+			//print("fragments size: %d", size);
 			processFragment(size, obj.getTexture2D());
 			depthTest(size);
 		}
@@ -142,6 +173,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 	if (!allFragments)
 	{
 		allFragments = (Fragment*)malloc(sizeof(Fragment)*fragmentsSize);
+		if (!allFragments) return 0;
 	}
 
 	// transform to view port
@@ -159,6 +191,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		if (count > fragmentsSize)
 		{
 			resizeFragments(count);
+			if (fragmentsSize == 0) return 0;
 		}
 		allFragments[0].x = pos1.x;
 		allFragments[0].y = pos1.y;
@@ -191,6 +224,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		if(data.fragmentsCount > fragmentsSize)
 		{
 			resizeFragments(data.fragmentsCount);
+			if (fragmentsSize == 0) return 0;
 		}
 		int c = 0;
 		int y = data.ymin;
@@ -332,12 +366,27 @@ void Scene::drawPixels(HDC hdc)
 
 void Scene::resizeFragments(int size)
 {
-	allFragments = (Fragment*)realloc(allFragments, sizeof(Fragment)*size);
+	auto temp = (Fragment*)realloc(allFragments, sizeof(Fragment)*size);
+	if (temp) allFragments = temp;
+	else
+	{
+		free(allFragments);
+		fragmentsSize = 0;
+		allFragments = nullptr;
+		return;
+	}
 	fragmentsSize = size;
 }
 void Scene::resizeVertexBuffer(int size)
 {
-	vertexBuffer = (Vertex*)realloc(vertexBuffer, sizeof(Vertex)* size);
+	auto temp = (Vertex*)realloc(vertexBuffer, sizeof(Vertex)* size);
+	if (temp) vertexBuffer = temp;
+	else
+	{
+		free(vertexBuffer);
+		vertexBufferSize = 0;
+		vertexBuffer = nullptr;
+	}
 	vertexBufferSize = size;
 }
 

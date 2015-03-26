@@ -5,20 +5,30 @@
 #include <vector>
 #include <memory>
 
+//enum Key{
+//	Forward;
+//};
+
 class Scene
 {
 public:
 	Scene();
 	~Scene();
+	void onKey(){};
+	void update(float deltaTime);
 	void drawScene(HDC hdc, int w, int h);
+	void onGUI(HDC hdc);
 	Camera* mainCamera() { return camera.get(); }
 	Lighting* mainLighting() { return lighting.get(); }
+	float getActualFps();
 
 	//void addGameObject(std::shared_ptr<GameObject> obj);
 	void addGameObject(GameObject&& obj);
 	//TODO: need remove an object?
 	bool isDrawline;
+	float fps;
 private:
+	float actualFps;
 	std::unique_ptr<Camera> camera;
 	//GameObject* object;
 	std::vector<GameObject> objects;

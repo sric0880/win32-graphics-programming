@@ -1,5 +1,7 @@
 #pragma once
 #include "Transform.h"
+#include <functional>
+
 class Texture2D;
 
 class GameObject
@@ -25,6 +27,8 @@ public:
 	int getTriangleCount() const;
 
 	Texture2D* getTexture2D() const;
+
+	std::function<void(GameObject*, float)> updateFunc;
 
 private:
 	//Don't allow copy and assign from another gameobject

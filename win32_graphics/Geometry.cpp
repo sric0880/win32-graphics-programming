@@ -2,6 +2,7 @@
 #include "Geometry.h"
 #include <cmath>
 #include <bitset>
+#include <stack>
 
 bool crossPlane(float destx, float f1, float f2, float& u, float f3, float f4, float f5, float f6)
 {
@@ -88,6 +89,16 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 	clippingTriangle_constructBitSet(v2, code[1]);
 	clippingTriangle_constructBitSet(v3, code[2]);
 	//test
+	//if ((code[0] & code[1] & code[2]) != 0) return 0;
+	////else maybe cross unit box
+	//// first obtain the triangle in the unit box
+	//Vector plane = (v2->position - v1->position).crossProduct(v3->position - v1->position);
+	//float d = -(plane.x * v1->position.x + plane.y * v1->position.y + plane.z * v1->position.z);
+
+
+	// then calculate the visible area
+
+
 	int c = 0;
 	clippingTriangle_(code[0], code[1], v1, v2, out, c);
 	clippingTriangle_(code[1], code[2], v2, v3, out, c);

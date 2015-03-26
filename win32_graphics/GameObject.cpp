@@ -33,6 +33,7 @@ GameObject::GameObject(GameObject&& obj)
 	this->index_size = obj.index_size;
 	this->transform = obj.transform;
 	this->_texture2D = obj._texture2D;
+	this->updateFunc = std::move(obj.updateFunc);
 	obj.buffer = nullptr;
 	obj.buffer_size = 0;
 	obj.index = nullptr;
@@ -54,6 +55,7 @@ GameObject& GameObject::operator= (GameObject&& obj)
 	this->index_size = obj.index_size;
 	this->transform = obj.transform;
 	this->_texture2D = obj._texture2D;
+	this->updateFunc = std::move(obj.updateFunc);
 	obj.buffer = nullptr;
 	obj.buffer_size = 0;
 	obj.index = nullptr;
