@@ -18,7 +18,7 @@ void configCamera(Camera* camera)
 	camera->setIsOrthProjection(false);
 	camera->setFarClippingPlane(1000);
 	camera->setNearClippingPlane(0.3f);
-	camera->setFieldOfView(60);
+	camera->setFieldOfView(45);
 	camera->setOrthBoxHeight(10.0f);
 
 	camera->moveSpeed = 3;
@@ -130,7 +130,7 @@ GameObject Cube()
 
 	memcpy(ibuffer, index, sizeof(int) * 36);
 
-	go.transform.setTranslation(1, 0, 6);
+	go.transform.setTranslation(0, 0, 6);
 	go.transform.setRotation(-30,60,70);
 	go.transform.setScale(1,1,1);
 
