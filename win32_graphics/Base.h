@@ -16,11 +16,19 @@ struct Vector
 	Vector operator+ (const Vector& vec) const;
 	Vector operator- (const Vector& vec) const;
 	Vector operator* (float scale) const;
+	const Vector& operator*= (const Vector& vec);
+	const Vector& operator+= (const Vector& vec);
 	Vector& operator*= (float scale);
 	Vector& operator/= (float scale);
 
 	static Vector Max(const Vector& v1, const Vector& v2);
 	const static Vector zero;
+	const static Vector forward;
+	const static Vector backward;
+	const static Vector left;
+	const static Vector right;
+	const static Vector up;
+	const static Vector down;
 
 	void log() const;
 };

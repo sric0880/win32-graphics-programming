@@ -5,6 +5,12 @@
 #include "OutputDebug.h"
 
 const Vector Vector::zero;
+const Vector Vector::forward(0,0,1);
+const Vector Vector::backward(0,0,-1);
+const Vector Vector::left(-1,0,0);
+const Vector Vector::right(1,0,0);
+const Vector Vector::up(0,1,0);
+const Vector Vector::down(0,-1,0);
 
 float Vector::length() const
 {
@@ -26,6 +32,20 @@ Vector Vector::operator- (const Vector& vec) const
 Vector Vector::operator* (float scale) const
 {
 	return Vector (x*scale, y*scale, z*scale);
+}
+const Vector& Vector::operator*= (const Vector& vec)
+{
+	x *= vec.x;
+	y *= vec.y;
+	z *= vec.z;
+	return *this;
+}
+const Vector& Vector::operator+= (const Vector& vec)
+{
+	x += vec.x;
+	y += vec.y;
+	z += vec.z;
+	return *this;
 }
 float Vector::dotProduct (const Vector& vec) const
 {

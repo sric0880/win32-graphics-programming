@@ -5,18 +5,19 @@
 #include <vector>
 #include <memory>
 
-//enum Key{
-//	Forward;
-//};
-
 class Scene
 {
 public:
 	Scene();
 	~Scene();
-	void onKey(){};
+	void onKey(CameraMoving);
+	void onKeyUp();
+	void onMouseDragMove(int x, int y);
+	void onMouseDragStart(int x, int y);
+	void onMouseDragEnd(int x, int y);
 	void update(float deltaTime);
-	void drawScene(HDC hdc, int w, int h);
+	void render(RECT rect);
+	void onDraw(HDC hdc);
 	void onGUI(HDC hdc);
 	Camera* mainCamera() { return camera.get(); }
 	Lighting* mainLighting() { return lighting.get(); }
@@ -45,8 +46,15 @@ private:
 	Fragment* allFragments;
 	int fragmentsSize;
 
-	UINT8* frameBuffer;
+	//UINT8* frameBuffer;
+	HDC mdc;
+	BYTE* frameBuffer;
+	HBITMAP bitmap;
+	int screenWidth;
+	int screenHeight;
 	float* depthBuffer;
+	int depthbufferSize;
+	bool isFirstDraw;
 
 	// 1. modelview and projection transform
 	// 2. normalize
@@ -63,13 +71,12 @@ private:
 	// 2. per pixel lighting
 	void processFragment(int size, const Texture2D* tex);
 	void depthTest(int size);
-	void drawPixels(HDC hdc);
 
 	void render(const GameObject& obj);
 	void resizeFragments(int size);
 	void resizeVertexBuffer(int size);
 
-	void initFrameBuffer();
+	void initFrameBuffer(HDC hdc);
 	void initDepthBuffer();
 	void initVertexBuffer();
 	void clearFrameBuffer();
@@ -77,7 +84,11 @@ private:
 	void releaseFrameBuffer();
 	void releaseDepthBuffer();
 
-	static inline int bufferIndex(int x, int y, int viewportWidth, int viewportHeight);
+	static inline int bufferIndex(int x, int y, int w);
 	//upside down
-	static inline int windowCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight);
+	static inline int windowCoordToBufferIndex(int x, int y, int w, int h);
+
+	//Mouse move data
+	int startMouseX;
+	int startMouseY;
 };

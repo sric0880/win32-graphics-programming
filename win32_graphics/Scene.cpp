@@ -4,6 +4,8 @@
 #include "Texture2D.h"
 
 #include "OutputDebug.h"
+#include <time.h>
+#include <cassert>
 
 Scene::Scene():
 	allFragments(nullptr),
@@ -11,14 +13,18 @@ Scene::Scene():
 	vertexBufferSize(1000),
 	fragmentsSize(1000),
 	frameBuffer(nullptr),
+	//bitmap(0),
 	depthBuffer(nullptr),
 	isDrawline(false),
 	camera(new Camera()),
 	lighting(new Lighting()),
 	fps(60),
-	actualFps(60)
+	actualFps(60),
+	isFirstDraw(true)
 {
-	initFrameBuffer();
+	screenWidth = GetSystemMetrics(SM_CXSCREEN);
+	screenHeight = GetSystemMetrics(SM_CYSCREEN);
+	depthbufferSize = screenWidth * screenHeight * sizeof(float);
 	initDepthBuffer();
 }
 
@@ -28,6 +34,46 @@ Scene::~Scene()
 	releaseDepthBuffer();
 	if (allFragments) free(allFragments);
 	if (vertexBuffer) free(vertexBuffer);
+}
+
+
+void Scene::onKey(CameraMoving key)
+{
+	camera->movingDir = key;
+	camera->movingSpeed = 3.0f; // Customize
+}
+
+void Scene::onKeyUp()
+{
+	camera->movingSpeed = 0;
+}
+
+void Scene::onMouseDragMove(int x, int y)
+{
+	float ry = (float)(y - startMouseY) / camera->getViewportHeight();
+	ry *= camera->getFieldOfView();
+
+	float rx = (float)(x - startMouseX) / camera->getViewportWidth();
+	rx *= camera->getHorizonFieldOfView();
+
+	Vector eulerAngle = camera->getTransform().getEulerAngle();
+	Vector newAngle(eulerAngle.x + ry, eulerAngle.y + rx, eulerAngle.z);
+
+	camera->setRotation(newAngle.x, newAngle.y, newAngle.z);
+	
+	startMouseX = x;
+	startMouseY = y;
+}
+
+void Scene::onMouseDragStart(int x, int y)
+{
+	startMouseX = x;
+	startMouseY = y;
+}
+void Scene::onMouseDragEnd(int x, int y)
+{
+	startMouseX = 0;
+	startMouseY = 0;
 }
 
 void Scene::onGUI(HDC hdc)
@@ -46,12 +92,28 @@ void Scene::addGameObject(GameObject&& obj)
 {
 	objects.emplace_back(std::forward<GameObject&&>(obj));
 }
+
 void Scene::update(float deltaTime)
 {
 	//update camera
-	//TODO:  
-
-	camera->moveSpeed = 0;
+	if (camera->movingSpeed > 0)
+	{
+		switch (camera->movingDir)
+		{
+		case Forward:
+			camera->moveForward(deltaTime);
+			break;
+		case Backward:
+			camera->moveBackward(deltaTime);
+			break;
+		case Left:
+			camera->moveLeft(deltaTime);
+			break;
+		case Right:
+			camera->moveRight(deltaTime);
+			break;
+		}
+	}
 
 	//update objects
 	if (deltaTime != 0)
@@ -62,8 +124,11 @@ void Scene::update(float deltaTime)
 			gameobject.updateFunc(&gameobject, deltaTime);
 	}
 }
-void Scene::drawScene(HDC hdc, int w, int h)
+
+void Scene::render(RECT rect)
 {
+	int w = rect.right - rect.left;
+	int h = rect.bottom - rect.top;
 	camera->setViewPortWidth(w);
 	camera->setViewPortHeight(h);
 	clearFrameBuffer();
@@ -89,7 +154,7 @@ void Scene::drawScene(HDC hdc, int w, int h)
 #endif
 		render(ptr_object);
 	}
-	drawPixels(hdc);
+
 }
 
 // draw buffer contains position, normal, color, texcoord that can put into triangles using index
@@ -116,16 +181,18 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 		Vertex* v1 = vertexBuffer + obj.getIndexAt(3 * i);
 		Vertex* v2 = vertexBuffer + obj.getIndexAt(3 * i + 1);
 		Vertex* v3 = vertexBuffer + obj.getIndexAt(3 * i + 2);
-		if (isBackface(*v1, *v2, *v3)) continue;
+		if (isAllBackface(*v1, *v2, *v3)) continue;
+		//if (isBackface(*v1, *v2, *v3)) continue;
 
 		//start clipping
 		Vertex output[6]; // max count == 6 && min count == 3
+		//FIXME: Cannot divided by w before clipping triangle
+		//		because w would be equal or above zero (vertex at the back of camera)
 		int count = clippingTriangle(v1, v2, v3, output);
 		count -= 2;
 		for (int j = 0; j < count; ++j)
 		{
 			int size = generateFragment(output[0], output[j+1], output[j+2] );
-			//print("fragments size: %d", size);
 			processFragment(size, obj.getTexture2D());
 			depthTest(size);
 		}
@@ -313,55 +380,28 @@ void Scene::processFragment(int size, const Texture2D* tex)
 
 void Scene::depthTest(int size)
 {
-	int w = camera->getViewportWidth();
-	int h = camera->getViewportHeight();
 	for (int i = 0; i < size; ++i)
 	{
 		auto& frame = allFragments[i];
-		int index_ = bufferIndex(frame.x, frame.y, w, h);
+		int index_ = bufferIndex(frame.x, frame.y, screenWidth);
 		int index = 3*index_;
 		if (isDrawline) //not need test depth
 		{
 			//update to frame buffer
-			frameBuffer[index] = allFragments[i].color.x * 0xff;
+			frameBuffer[index] = allFragments[i].color.z * 0xff;
 			frameBuffer[index + 1] = allFragments[i].color.y * 0xff;
-			frameBuffer[index + 2] = allFragments[i].color.z * 0xff;
+			frameBuffer[index + 2] = allFragments[i].color.x * 0xff;
 		}
 		else if (depthBuffer[index_] > allFragments[i].depth)
 		{
 			depthBuffer[index_] = allFragments[i].depth;
 
 			//update to frame buffer
-			frameBuffer[index] = allFragments[i].color.x * 0xff;
+			frameBuffer[index] = allFragments[i].color.z * 0xff;
 			frameBuffer[index + 1] = allFragments[i].color.y * 0xff;
-			frameBuffer[index + 2] = allFragments[i].color.z * 0xff;
+			frameBuffer[index + 2] = allFragments[i].color.x * 0xff;
 		}
 	}
-}
-void Scene::drawPixels(HDC hdc)
-{
-	int viewportWidth = camera->getViewportWidth();
-	int viewportHeight = camera->getViewportHeight();
-	HDC mdc = CreateCompatibleDC(hdc);
-	HBITMAP bitmap = CreateCompatibleBitmap(hdc, viewportWidth, viewportHeight);
-	SelectObject(mdc, bitmap);
-
-	//draw pixels
-	int pixelsCount = viewportWidth * viewportHeight;
-	for (int i = 0; i < viewportWidth; ++i)
-	{
-		for (int j = 0; j < viewportHeight; ++j)
-		{
-			int index =3* windowCoordToBufferIndex(i, j, viewportWidth, viewportHeight);
-			SetPixel(mdc, i, j, RGB(frameBuffer[index], frameBuffer[index+1], frameBuffer[index+2]));
-		}
-	}
-
-	//swap to hdc
-	BitBlt(hdc, 0, 0, viewportWidth, viewportHeight, mdc, 0, 0, SRCCOPY);
-	//release
-	DeleteDC(mdc);
-	DeleteObject(bitmap);
 }
 
 void Scene::resizeFragments(int size)
@@ -390,13 +430,33 @@ void Scene::resizeVertexBuffer(int size)
 	vertexBufferSize = size;
 }
 
-const int framebufferSize = 1680*1050*3;
-const int depthbufferSize = 1680*1050*sizeof(float);
-
-void Scene::initFrameBuffer()
+void Scene::onDraw(HDC hdc)
 {
-	if (!frameBuffer)
-		frameBuffer = (UINT8*) malloc( framebufferSize );
+	if (isFirstDraw)
+	{
+		initFrameBuffer(hdc);
+		isFirstDraw = false;
+	}
+	int w = camera->getViewportWidth();
+	int h = camera->getViewportHeight();
+	BitBlt(hdc, 0, 0, w, h, mdc, 0, screenHeight - h, SRCCOPY);
+}
+
+void Scene::initFrameBuffer(HDC hdc)
+{
+	mdc = CreateCompatibleDC(hdc);
+	BITMAPINFO bmInfo;
+	memset(&bmInfo, 0, sizeof(BITMAPINFO));
+	bmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmInfo.bmiHeader.biWidth = screenWidth;
+	bmInfo.bmiHeader.biHeight = screenHeight;
+	bmInfo.bmiHeader.biPlanes = 1;
+	bmInfo.bmiHeader.biBitCount = 24;
+	bmInfo.bmiHeader.biCompression = BI_RGB;
+	bitmap = CreateDIBSection(mdc, &bmInfo, DIB_RGB_COLORS, (void**)&frameBuffer, NULL, 0);
+	//bitmap = CreateCompatibleBitmap(hdc, screenWidth, screenHeight);
+	assert(frameBuffer != nullptr);
+	SelectObject(mdc, bitmap);
 }
 void Scene::initDepthBuffer()
 {
@@ -405,22 +465,24 @@ void Scene::initDepthBuffer()
 }
 void Scene::clearFrameBuffer()
 {
-	if(frameBuffer)
-		memset(frameBuffer, 0, framebufferSize);
+	if (frameBuffer)
+		memset(frameBuffer, 0, 3 * screenWidth*screenHeight);
 }
 void Scene::clearDepthBuffer()
 {
+	int c = depthbufferSize / 4;
 	if (depthBuffer)
 	{
-		int c = depthbufferSize / 4;
 		for (int i = 0; i < c; ++i) depthBuffer[i] = 1.0f;
 	}
 }
 void Scene::releaseFrameBuffer()
 {
-	if(frameBuffer)
-		free(frameBuffer);
-	frameBuffer = nullptr;
+	if (!isFirstDraw)
+	{
+		DeleteDC(mdc);
+		DeleteObject(bitmap);
+	}
 }
 void Scene::releaseDepthBuffer()
 {
@@ -429,12 +491,12 @@ void Scene::releaseDepthBuffer()
 	depthBuffer = nullptr;
 }
 
-inline int Scene::bufferIndex(int x, int y, int viewportWidth, int viewportHeight)
+inline int Scene::bufferIndex(int x, int y, int w)
 {
-	return viewportWidth * y + x ;
+	return w * y + x ;
 }
 
-inline int Scene::windowCoordToBufferIndex(int x, int y, int viewportWidth, int viewportHeight)
+inline int Scene::windowCoordToBufferIndex(int x, int y, int w, int h)
 {
-	return viewportWidth* (viewportHeight - y) + x;
+	return w * (h - y) + x;
 }

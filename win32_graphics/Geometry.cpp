@@ -3,7 +3,7 @@
 #include <cmath>
 #include <bitset>
 #include <list>
-//#include <forward_list>
+#include "OutputDebug.h"
 
 //bool crossPlane(float destx, float f1, float f2, float& u, float f3, float f4, float f5, float f6)
 //{
@@ -54,6 +54,7 @@
 //	}
 //	return c;
 //}
+
 inline void clippingTriangle_constructBitSet(const Vector& position, std::bitset<6> & code)
 {
 	if (position.x < -1) code[0] = 1;	//left
@@ -63,6 +64,7 @@ inline void clippingTriangle_constructBitSet(const Vector& position, std::bitset
 	if (position.z < -1) code[4] = 1;	//near
 	if (position.z > 1) code[5] = 1;		//far
 }
+
 //void clippingTriangle_(std::bitset<6>& code1, std::bitset<6>& code2, const Vertex* v1, const Vertex* v2, Vertex* out, int& c)
 //{
 //	if ( code1.none() ) { //inside box
@@ -120,6 +122,8 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 	l.push_front(n3);
 	l.push_front(n2);
 	l.push_front(n1);
+	std::string  st = a1.to_string();
+	print("bitcode: %s", st.c_str());
 	if (a1.at(2)) // if up
 	{
 		auto iter = l.begin();
@@ -352,6 +356,12 @@ bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 	Vector n = (v2.position - v1.position).crossProduct(v3.position - v1.position);
 	// v1 already in camera space
 	return v1.eye.dotProduct(n) > 0;
+}
+bool isAllBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3)
+{
+	Vector n = (v2.position - v1.position).crossProduct(v3.position - v1.position);
+	// v1 already in camera space
+	return v1.eye.dotProduct(n) > 0 && v2.eye.dotProduct(n) > 0 && v3.eye.dotProduct(n) > 0;
 }
 ///////
 //Draw line agorithms (not contain start and end)

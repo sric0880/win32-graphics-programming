@@ -16,7 +16,8 @@ Camera::Camera(void):
 	viewPortHeight(0),
 	viewPortWidth(0),
 	widthHeightRatio(1),
-	moveSpeed(2)
+	movingSpeed(0),
+	movingDir(Forward)
 {
 }
 
@@ -158,4 +159,24 @@ int Camera::getViewportWidth() const
 int Camera::getViewportHeight() const
 {
 	return viewPortHeight;
+}
+
+void Camera::setMovingDirection(CameraMoving md)
+{
+	movingDir = md;
+}
+
+void Camera::move(float delta, const Vector& dir)
+{
+	auto dest = transform.getRotationMatrix() * dir;
+	dest.normalize();
+	dest *= (delta*movingSpeed);
+	auto pos = transform.getTranslation();
+	pos += dest;
+	setTranslation(pos.x, pos.y, pos.z);
+}
+
+float Camera::getHorizonFieldOfView() const
+{
+	return (2 * atanf((tanf(3.14159f / 180 * fieldOfView / 2) / widthHeightRatio))) * 180/3.14159f;
 }

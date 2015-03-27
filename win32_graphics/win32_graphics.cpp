@@ -129,6 +129,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //
 clock_t lastUpdateTime = 0;
+bool isLeftBtnDown = false;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -142,6 +143,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_TIMER:
 	{
+		//Mainloop
 		float deltaTime = 0;
 		clock_t currentUpdateTime = clock();
 		if (lastUpdateTime == 0)
@@ -151,7 +153,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			deltaTime = 1.0f*(currentUpdateTime - lastUpdateTime) / CLOCKS_PER_SEC;
 		}
 		lastUpdateTime = currentUpdateTime;
+		//Update
 		scene.update(deltaTime);
+
+		//Render
+		RECT clientRect;
+		GetClientRect(hWnd, &clientRect);
+		scene.render(clientRect);
 		InvalidateRect(hWnd, NULL, false);
 		break;
 	}
@@ -159,35 +167,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wParam)
 		{
 		case 'W':
-			scene.onKey();
+			scene.onKey(Forward);
 			break;
 		case 'S':
-			scene.onKey();
+			scene.onKey(Backward);
 			break;
 		case 'A':
-			scene.onKey();
+			scene.onKey(Left);
 			break;
 		case 'D':
-			scene.onKey();
+			scene.onKey(Right);
 			break;
 		}
 		break;
-	case WM_CHAR:
-		switch (wParam)
-		{
-		case 'W':
-			scene.onKey();
-			break;
-		case 'S':
-			scene.onKey();
-			break;
-		case 'A':
-			scene.onKey();
-			break;
-		case 'D':
-			scene.onKey();
-			break;
-		}
+	case WM_LBUTTONDOWN:
+		isLeftBtnDown = true;
+		scene.onMouseDragStart(LOWORD(lParam), HIWORD(lParam));
+		break;
+	case WM_LBUTTONUP:
+		isLeftBtnDown = false;
+		scene.onMouseDragEnd(LOWORD(lParam), HIWORD(lParam));
+		break;
+	case WM_MOUSEMOVE:
+		if (isLeftBtnDown)
+			scene.onMouseDragMove(LOWORD(lParam), HIWORD(lParam));
+		break;
+	case WM_KEYUP:
+		scene.onKeyUp();
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
@@ -208,17 +214,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		{
 		hdc = BeginPaint(hWnd, &ps);
-		// Drawing code
-		RECT clientRect;
-		GetClientRect(hWnd, &clientRect);
-		int w = clientRect.right - clientRect.left;
-		int h = clientRect.bottom - clientRect.top;
-		scene.drawScene(hdc, w, h);
+		scene.onDraw(hdc);
 		scene.onGUI(hdc);
 		EndPaint(hWnd, &ps);
 		break;
 		}
 	case WM_DESTROY:
+		KillTimer(hWnd, 1);
 		PostQuitMessage(0);
 		break;
 	default:

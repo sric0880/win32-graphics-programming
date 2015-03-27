@@ -1,5 +1,11 @@
 #pragma once
 #include "Transform.h"
+enum CameraMoving{
+	Forward,
+	Backward,
+	Left,
+	Right
+};
 
 class Camera
 {
@@ -29,13 +35,35 @@ public:
 	void setFarClippingPlane(float);
 	void setViewPortWidth(int);
 	void setViewPortHeight(int);
+	void setMovingDirection(CameraMoving md);
+
 	const Matrix& getViewMatrix();
 	const Matrix& getProjectionMatrix();
 	const Matrix& getViewportMatrix();
 	int getViewportWidth() const;
 	int getViewportHeight() const;
+	float getFieldOfView() const { return fieldOfView; }
+	float getHorizonFieldOfView() const;
+	const Transform& getTransform() const { return transform; }
 	
-	float moveSpeed;
+	float movingSpeed;
+	CameraMoving movingDir;
+	void moveForward(float delta)
+	{
+		move(delta, Vector::forward);
+	}
+	inline void moveBackward(float delta)
+	{
+		move(delta, Vector::backward);
+	}
+	void moveLeft(float delta)
+	{
+		move(delta, Vector::left);
+	}
+	void moveRight(float delta)
+	{
+		move(delta, Vector::right);
+	}
 private:
 	Transform transform;
 	bool isOrthProjection;
@@ -57,5 +85,7 @@ private:
 
 	float widthHeightRatio;
 	void setDirtyFlag();
+
+	void move(float delta, const Vector& dir);
 
 };

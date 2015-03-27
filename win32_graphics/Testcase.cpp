@@ -18,10 +18,9 @@ void configCamera(Camera* camera)
 	camera->setIsOrthProjection(false);
 	camera->setFarClippingPlane(1000);
 	camera->setNearClippingPlane(0.3f);
-	camera->setFieldOfView(45);
+	camera->setFieldOfView(60);
 	camera->setOrthBoxHeight(10.0f);
 
-	camera->moveSpeed = 3;
 	camera->setTranslation(0,0,-1);
 	camera->setRotation(0,0,0);
 }

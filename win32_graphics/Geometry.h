@@ -24,6 +24,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 
 // back face culling
 bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3);
+bool isAllBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3);
 
 // draw line using bresenham algorithm
 int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* end);
