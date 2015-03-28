@@ -181,8 +181,8 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 		Vertex* v1 = vertexBuffer + obj.getIndexAt(3 * i);
 		Vertex* v2 = vertexBuffer + obj.getIndexAt(3 * i + 1);
 		Vertex* v3 = vertexBuffer + obj.getIndexAt(3 * i + 2);
-		if (isAllBackface(*v1, *v2, *v3)) continue;
-		//if (isBackface(*v1, *v2, *v3)) continue;
+		//if (isAllBackface(*v1, *v2, *v3)) continue;
+		if (isBackface(*v1, *v2, *v3)) continue;
 
 		//start clipping
 		Vertex output[6]; // max count == 6 && min count == 3
