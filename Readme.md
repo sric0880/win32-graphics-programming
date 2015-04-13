@@ -30,5 +30,6 @@
 * window 7 or above
 
 ##Bugs
-1. After porj-model-view transform, x,y,z must not divided by w before triangle clipping.
+1. [Fixed] After porj-model-view transform, x,y,z must not divided by w before triangle clipping.
 2. Cannot get the accurate windows resolution in virtual machine
+3. Texture coordinate interpolation while clipping.

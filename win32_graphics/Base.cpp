@@ -168,10 +168,10 @@ Vector Matrix::operator* (const Vector& vec) const
 	vector.y = m[0].y*vec.x + m[1].y*vec.y + m[2].y*vec.z + m[3].y*vec.w;
 	vector.z = m[0].z*vec.x + m[1].z*vec.y + m[2].z*vec.z + m[3].z*vec.w;
 	vector.w = m[0].w*vec.x + m[1].w*vec.y + m[2].w*vec.z + m[3].w*vec.w;
-	vector.x /= vector.w;
+	/*vector.x /= vector.w;
 	vector.y /= vector.w;
 	vector.z /= vector.w;
-	vector.w = 1;
+	vector.w = 1;*/
 	return vector;
 }
 Matrix Matrix::operator* (float x) const
