@@ -39,6 +39,7 @@ public:
 
 	const Matrix& getViewMatrix();
 	const Matrix& getProjectionMatrix();
+	const Matrix& getReverseProjectionMatrix();
 	const Matrix& getViewportMatrix();
 	int getViewportWidth() const;
 	int getViewportHeight() const;
@@ -76,6 +77,8 @@ private:
 	Matrix view;
 	Matrix projectOrth;
 	Matrix projectPersp;
+	Matrix reverseProjectOrth;
+	Matrix reverseProjectPersp;
 	Matrix viewport;
 
 	bool isViewDirty;

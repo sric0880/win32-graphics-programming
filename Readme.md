@@ -31,5 +31,7 @@
 
 ##Bugs
 1. [Fixed] After porj-model-view transform, x,y,z must not divided by w before triangle clipping.
-2. Cannot get the accurate windows resolution in virtual machine
-3. Texture coordinate interpolation while clipping.
+2. Cannot get the accurate windows resolution in virtual machine.
+3. [Fixed] Texture coordinate interpolation while clipping.
+4. Depth test confict.
+5. Blink while scaling window or moving window.

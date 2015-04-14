@@ -186,8 +186,6 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 
 		//start clipping
 		Vertex output[6]; // max count == 6 && min count == 3
-		//FIXME: Cannot divided by w before clipping triangle
-		//		because w would be equal or above zero (vertex at the back of camera)
 		int count = clippingTriangle(v1, v2, v3, output);
 		count -= 2;
 		for (int j = 0; j < count; ++j)
@@ -225,14 +223,7 @@ void Scene::processVertex(const Vertex* input, Vertex* output)
 		output->color = input->color;
 	}
 
-	if (camera->getIsOrthProjection())
-	{
-		output->texCoord = input->texCoord;
-	}
-	else
-	{
-		output->texCoord = input->texCoord  * (-1.0f/output->eye.z);
-	}
+	output->texCoord = input->texCoord;
 }
 
 int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3)
@@ -343,7 +334,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			else 
 			{
 				float zr = -1.0f / (1.0f/v1.eye.z*interp.x + 1.0f/v2.eye.z*interp.y + 1.0f/v3.eye.z*interp.z);
-				allFragments[i].texCoord = (v1.texCoord* interp.x + v2.texCoord * interp.y + v3.texCoord * interp.z) * zr;
+				allFragments[i].texCoord = (v1.texCoord * (-1.0f/v1.eye.z)* interp.x + v2.texCoord * (-1.0f/v2.eye.z) * interp.y + v3.texCoord* (-1.0f/v3.eye.z) * interp.z) * zr;
 			}
 			clerp(0, 1, allFragments[i].texCoord);
 

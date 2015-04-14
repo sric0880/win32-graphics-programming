@@ -68,15 +68,15 @@ GameObject Quad()
 	go.transform.setRotation(10,0,0);
 	go.transform.setScale(2,2,2);
 
-	go.updateFunc = [](GameObject* go, float deltaTime)
-	{
-		const float speed = 20;
-		Vector eulerAngle = go->transform.getEulerAngle();
-		//eulerAngle.x += deltaTime * speed;
-		eulerAngle.y += deltaTime * speed;
-		//eulerAngle.z += deltaTime * speed;
-		go->transform.setRotation(eulerAngle.x, eulerAngle.y, eulerAngle.z);
-	};
+	//go.updateFunc = [](GameObject* go, float deltaTime)
+	//{
+	//	const float speed = 20;
+	//	Vector eulerAngle = go->transform.getEulerAngle();
+	//	//eulerAngle.x += deltaTime * speed;
+	//	eulerAngle.y += deltaTime * speed;
+	//	//eulerAngle.z += deltaTime * speed;
+	//	go->transform.setRotation(eulerAngle.x, eulerAngle.y, eulerAngle.z);
+	//};
 
 	return go;
 }

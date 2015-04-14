@@ -333,6 +333,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 		out[c].position.y /= out[c].position.w;
 		out[c].position.z /= out[c].position.w;
 		out[c].position.w = 1;
+
 		out[c].color = v1->color * iter->weight.x + v2->color * iter->weight.y + v3->color * iter->weight.z;
 		out[c].normal = v1->normal * iter->weight.x + v2->normal * iter->weight.y + v3->normal * iter->weight.z;
 		out[c].texCoord = v1->texCoord * iter->weight.x + v2->texCoord * iter->weight.y + v3->texCoord * iter->weight.z;

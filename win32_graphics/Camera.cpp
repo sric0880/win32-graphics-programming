@@ -95,6 +95,8 @@ const Matrix& Camera::getProjectionMatrix()
 			projectOrth.m[3].x = 0;
 			projectOrth.m[3].y = 0;
 			projectOrth.m[3].z = (nearClippingPlane + farClippingPlane) / zrange;
+
+			reverseProjectOrth = ~projectOrth;
 			isProjectOrthDirty = false;
 #ifdef _DEBUG
 		print("Orth Projection: \r\n");
@@ -115,6 +117,8 @@ const Matrix& Camera::getProjectionMatrix()
 			projectPersp.m[2].w = -1;
 			projectPersp.m[3].z = - 2*nearClippingPlane*farClippingPlane / zrange;
 			projectPersp.m[3].w = 0;
+
+			reverseProjectPersp = ~projectPersp;
 			isProjectPerspDirty = false;
 #ifdef _DEBUG
 		print("Perspective Projection: \r\n");
@@ -122,6 +126,17 @@ const Matrix& Camera::getProjectionMatrix()
 #endif
 		}
 		return projectPersp;
+	}
+}
+
+const Matrix& Camera::getReverseProjectionMatrix()
+{
+	if (isOrthProjection)
+	{
+		return reverseProjectOrth;
+	}
+	else {
+		return reverseProjectPersp;
 	}
 }
 
