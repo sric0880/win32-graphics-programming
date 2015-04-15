@@ -12,7 +12,7 @@ struct FillData
 	int ymin;
 	int fragmentsCount;
 	std::vector<Line> lines;
-	FillData(): ymin(0), fragmentsCount(0) {}
+	FillData(): ymin(1000000), fragmentsCount(0) {}
 };
 
 // clip triangle in clipping space

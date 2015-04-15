@@ -407,49 +407,117 @@ int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* e
 }
 
 // scan-line algorithm
-void scanTriangle_top(FillData* data, float left, float right, float k1, float k2, int ymin, bool pushFirstLine)
+void scanTriangle_top(FillData* data, float left, float right, float k1, float k2, float ymin, bool pushFirstLine)
 {
-	if(data->ymin > ymin) data->ymin = ymin;
-	for(int y = ymin; ; ++y)
+	int ym = std::ceilf(ymin);
+	float deltaY = ym - ymin;
+	if (data->ymin > ym) data->ymin = ym;
+	for(; ; deltaY = 1)
 	{
+		left += k1 * deltaY;
+		right += k2 * deltaY;
+		if (left >= right) break;
 		if(pushFirstLine) {
 			int l = std::ceilf(left);
 			int r = std::floorf(right);
-			data->lines.push_back(Line(l, r));
-			data->fragmentsCount+=(r-l+1);
+			if (r >= l){
+				data->lines.push_back(Line(l, r));
+				data->fragmentsCount += (r - l + 1);
+			}
 		}
 		pushFirstLine = true;
-		left += k1;
-		right += k2;
-		if (left >= right) break;
 	}
 }
-void scanTriangle_bottom(FillData* data, int x, int y, float k1, float k2, int ymax)
+void scanTriangle_bottom(FillData* data, float x, float y, float k1, float k2, int ymax)
 {
 	float left, right;
 	left = right = (float)x;
-	for(int i = y; i <= ymax; ++i)
+	float deltaY = 0;
+	data->ymin = std::ceilf(y);
+	for(int i = data->ymin, deltaY = i - y; i <= ymax; ++i, deltaY = 1)
 	{
+		left += k1 * deltaY;
+		right += k2 * deltaY;
 		int l = std::ceilf(left);
 		int r = std::floorf(right);
-		data->lines.push_back(Line(l,r));
-		data->fragmentsCount+=(r-l+1);
-		left += k1;
-		right += k2;
+		if (r >= l)
+		{
+			data->lines.push_back(Line(l, r));
+			data->fragmentsCount += (r - l + 1);
+		}
 	}
 }
 
 void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vector& p3)
 {
+	float x0 = p1.x; float x1 = p2.x; float x2 = p3.x;
+	float y0 = p1.y; float y1 = p2.y; float y2 = p3.y;
+	if(((int)x0==(int)x1&&(int)x1==(int)x2)||((int)y0==(int)y1&&(int)y1==(int)y2))
+	{
+		return;
+	}
+
+	if(y0>y1)
+	{
+		std::swap(x0,x1);
+		std::swap(y0,y1);
+	}
+
+	if(y0>y2)  
+	{
+		std::swap(x0,x2);  
+		std::swap(y0,y2);
+	}
+
+	if(y1>y2)  
+	{  
+		std::swap(y1,y2);
+		std::swap(x1,x2);
+	}
+
+	if(y0 == y1)
+	{
+		float l = x0 < x1 ? x0 : x1;
+		float r = x0 < x1 ? x1 : x0;
+		float k1 = (x2-l)/(y2-y0);
+		float k2 = (x2-r)/(y2-y0);
+		scanTriangle_top(data, l, r, k1, k2, y0, true);
+	}
+	else if(y1 == y2)
+	{
+		float l = x1 < x2 ? x1 : x2;
+		float r = x1 < x2 ? x2 : x1;
+		float k1 = (l - x0)/(y1 - y0);
+		float k2 = (r - x0)/(y1 - y0);
+		scanTriangle_bottom(data, x0, y0, k1, k2, std::floorf(y1));
+	}
+	else
+	{
+		float k1 = (x1 - x0) / (y1 - y0);
+		float k2 = (x2 - x0) / (y2 - y0);
+		if (k1 < k2)
+			scanTriangle_bottom(data, x0, y0, k1, k2, std::floorf(y1));
+		else
+			scanTriangle_bottom(data, x0, y0, k2, k1, std::floorf(y1));
+
+		float x = x0 + (y1-y0)*(x2-x0)/(y2-y0);
+		if (x1 < x)
+			scanTriangle_top(data,  x1, x, (x2 - x1)/(y2-y1), (x2-x0)/(y2-y0), y1, false);
+		else
+			scanTriangle_top(data,  x, x1, (x2 - x0)/(y2-y0), (x2-x1)/(y2-y1), y1, false);
+	}
+}
+
+void __scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vector& p3)
+{
 	int x0 = (int)p1.x; int x1 = (int)p2.x; int x2 = (int)p3.x;
 	int y0 = (int)p1.y; int y1 = (int)p2.y; int y2 = (int)p3.y;
 	if((x0==x1&&x1==x2)||(y0==y1&&y1==y2))
 	{
-		assert(0);
 		return;
 	}
 
-	if(y0>y1)  
+	if(y0>y1)
 	{
 		std::swap(x0,x1);
 		std::swap(y0,y1);
@@ -459,7 +527,7 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 	{  
 		std::swap(x0,x2);  
 		std::swap(y0,y2);
-	}  
+	}
 
 	if(y1>y2)  
 	{  

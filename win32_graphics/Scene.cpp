@@ -238,10 +238,6 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 	Vector pos2 = camera->getViewportMatrix() * v2.position;
 	Vector pos3 = camera->getViewportMatrix() * v3.position;
 
-	pos1.toInt();
-	pos2.toInt();
-	pos3.toInt();
-
 	//Draw line
 	if (isDrawline)
 	{
@@ -329,6 +325,16 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			//Depth interpolation
 			//z is not linear but 1/z is linear!
 			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
+			//assert(allFragments[i].depth >= 0);
+			if (allFragments[i].depth < 0)
+			{
+				print("-----------------");
+				interp.log();
+				print("fragment:%d of %d, x:%d, y:%d", i, c, allFragments[i].x, allFragments[i].y);
+				pos1.log();
+				pos2.log();
+				pos3.log();
+			}
 
 			//Texture Coord interpolation
 			if (camera->getIsOrthProjection())
