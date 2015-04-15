@@ -161,7 +161,7 @@ GameObject Sphere()
 	const float PI2 = 6.2831853f;
 	const int vertexCountPerCircle = 18;
 	const int countOfCircles = 37;
-	const int vertexCount = vertexCountPerCircle * countOfCircles - 2*(countOfCircles-1);
+	const int vertexCount = vertexCountPerCircle * countOfCircles;
 	const int indexCount = (vertexCountPerCircle-2) * (countOfCircles-1) * 6;
 	const float angleVerticle = PI / (vertexCountPerCircle-1);
 	const float angleHorizon = PI2 / (countOfCircles-1);
@@ -172,15 +172,15 @@ GameObject Sphere()
 	auto tex = go.getTexture2D();
 	tex->loadTexture2D(MAKEINTRESOURCE(IDB_BITMAP2));
 
-	vbuffer[0] = { { 0, -1, 0 }, { 0.75, 0.75, 0.75 }, { 0, 0, 0, 0 }, { 0, -1, 0 } };
-	vbuffer[1] = { { 0, 1, 0 }, { 0.75, 0.75, 0.75 }, { 0, 1, 0, 0 }, { 0, 1, 0 } };
+	//vbuffer[0] = { { 0, -1, 0 }, { 0.75, 0.75, 0.75 }, { 0, 0, 0, 0 }, { 0, -1, 0 } };
+	//vbuffer[1] = { { 0, 1, 0 }, { 0.75, 0.75, 0.75 }, { 0, 1, 0, 0 }, { 0, 1, 0 } };
 
-	int c = 2;
+	int c = 0;
 	for (int i = 0; i < countOfCircles; ++i)
 	{
 		float zs = sin(i * angleHorizon);
 		float xc = cos(i * angleHorizon);
-		for (int j = 1; j < vertexCountPerCircle-1; ++j)
+		for (int j = 0; j < vertexCountPerCircle; ++j)
 		{
 			float a = j * angleVerticle - PI/2;
 			float y = sin(a);
@@ -190,7 +190,7 @@ GameObject Sphere()
 			vbuffer[c].position = { x, y, z };
 			vbuffer[c].color = { 0, 0, 0 };
 			vbuffer[c].normal = { x, y, z };
-			vbuffer[c].texCoord = { (float)i/countOfCircles, (float)j / (vertexCountPerCircle-1), 0 };
+			vbuffer[c].texCoord = { (float)i/countOfCircles, (float)j / vertexCountPerCircle, 0 };
 			++c;
 		}
 	}
@@ -198,13 +198,13 @@ GameObject Sphere()
 	c = 0;
 	for (int i = 0; i < countOfCircles - 1; ++i)
 	{
-		int startIndex = i *(vertexCountPerCircle - 2) + 2;
-		int nextStartIndex = (i+1)*(vertexCountPerCircle - 2) + 2;
+		int startIndex = i * vertexCountPerCircle + 1;
+		int nextStartIndex = startIndex + vertexCountPerCircle;
 		for (int j = 0; j < vertexCountPerCircle - 1; ++j)
 		{
 			if (j == 0)
 			{
-				ibuffer[c++] = 0;
+				ibuffer[c++] = startIndex - 1;
 				ibuffer[c++] = nextStartIndex;
 				ibuffer[c++] = startIndex;
 			}
@@ -212,7 +212,7 @@ GameObject Sphere()
 			{
 				ibuffer[c++] = startIndex + j - 1;
 				ibuffer[c++] = nextStartIndex + j - 1;
-				ibuffer[c++] = 1;
+				ibuffer[c++] = nextStartIndex - 2;
 			}
 			else
 			{
