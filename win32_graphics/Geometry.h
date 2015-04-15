@@ -5,14 +5,14 @@ struct Line
 {
 	int left;
 	int right;
-	Line(int l, int r): left(l), right(r){}
+	int y;
+	Line(int l, int r, int y): left(l), right(r), y(y){}
 };
 struct FillData
 {
-	int ymin;
 	int fragmentsCount;
 	std::vector<Line> lines;
-	FillData(): ymin(1000000), fragmentsCount(0) {}
+	FillData(): fragmentsCount(0) {}
 };
 
 // clip triangle in clipping space

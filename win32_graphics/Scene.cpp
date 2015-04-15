@@ -22,8 +22,10 @@ Scene::Scene():
 	actualFps(60),
 	isFirstDraw(true)
 {
-	screenWidth = GetSystemMetrics(SM_CXSCREEN);
-	screenHeight = GetSystemMetrics(SM_CYSCREEN);
+	//screenWidth = GetSystemMetrics(SM_CXSCREEN);
+	//screenHeight = GetSystemMetrics(SM_CYSCREEN);
+	screenWidth = 2560;
+	screenHeight = 1600;
 	depthbufferSize = screenWidth * screenHeight * sizeof(float);
 	initDepthBuffer();
 }
@@ -285,16 +287,14 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			if (fragmentsSize == 0) return 0;
 		}
 		int c = 0;
-		int y = data.ymin;
 		for(auto line : data.lines)
 		{
 			for (int j = line.left; j <= line.right; ++j)
 			{
-				allFragments[c].y = y;
 				allFragments[c].x = j;
+				allFragments[c].y = line.y;
 				++c;
 			}
-			++y;
 		}
 
 		//Interpolation
@@ -315,6 +315,10 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		for(int i = 0; i < c; ++i)
 		{
 			Vector interp = interpolationMatrix * Vector(allFragments[i].x, allFragments[i].y, 1);
+			if (c == 1 && (interp.x < 0 || interp.y < 0 || interp.z < 0))
+			{
+				interp.x = interp.y = interp.z = 1.0f/3.0f;
+			}
 			//Color interpolation
 			allFragments[i].color = v1.color * interp.x + v2.color * interp.y + v3.color * interp.z;
 			clerp(0, 1, allFragments[i].color);
@@ -323,7 +327,6 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			allFragments[i].normal = v1.normal * interp.x + v2.normal * interp.y + v3.normal * interp.z;
 			
 			//Depth interpolation
-			//z is not linear but 1/z is linear!
 			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
 			//assert(allFragments[i].depth >= 0);
 			if (allFragments[i].depth < 0)
