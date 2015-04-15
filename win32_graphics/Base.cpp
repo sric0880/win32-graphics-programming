@@ -69,6 +69,13 @@ void Vector::log() const
 {
 	print("x: %.3f, y: %.3f, z: %.3f, w: %.3f\r\n", x, y, z, w);
 }
+void Vector::toInt()
+{
+	x = (int)x;
+	y = (int)y;
+	z = (int)z;
+	w = (int)w;
+}
 
 Matrix & Matrix::operator+= (const Matrix& mat)
 {

@@ -112,7 +112,6 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 			{
 				float y = cur->pos.y - cur->pos.w;
 				float w = y / (y - (iter->pos.y - iter->pos.w));
-				//float w = (1 - cur->pos.y) / (iter->pos.y - cur->pos.y);
 				Node n;
 				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
 				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
@@ -149,7 +148,6 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 			{
 				float y = cur->pos.y + cur->pos.w;
 				float w = y / (y - (iter->pos.y + iter->pos.w));
-				//float w = (-1 - cur->pos.y) / (iter->pos.y - cur->pos.y);
 				Node n;
 				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
 				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
@@ -187,7 +185,6 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 			{
 				float z = cur->pos.z + cur->pos.w;
 				float w = z / (z - (iter->pos.z + iter->pos.w));
-				//float w = (-1 - cur->pos.z) / (iter->pos.z - cur->pos.z);
 				Node n;
 				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
 				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
@@ -225,7 +222,6 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 			{
 				float z = cur->pos.z - cur->pos.w;
 				float w = z / (z - (iter->pos.z - iter->pos.w));
-				//float w = (1 - cur->pos.z) / (iter->pos.z - cur->pos.z);
 				Node n;
 				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
 				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
@@ -263,7 +259,6 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 			{
 				float x = cur->pos.x + cur->pos.w;
 				float w = x / (x - (iter->pos.x + iter->pos.w));
-				//float w = (-1 - cur->pos.x) / (iter->pos.x - cur->pos.x);
 				Node n;
 				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
 				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
@@ -301,7 +296,6 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 			{
 				float x = cur->pos.x - cur->pos.w;
 				float w = x / (x - (iter->pos.x - iter->pos.w));
-				//float w = (1 - cur->pos.x) / (iter->pos.x - cur->pos.x);
 				Node n;
 				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
 				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
@@ -456,6 +450,7 @@ void scanTriangle(FillData* data, const Vector& p1, const Vector& p2, const Vect
 	int y0 = (int)p1.y; int y1 = (int)p2.y; int y2 = (int)p3.y;
 	if((x0==x1&&x1==x2)||(y0==y1&&y1==y2))
 	{
+		assert(0);
 		return;
 	}
 

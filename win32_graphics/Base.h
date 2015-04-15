@@ -31,6 +31,7 @@ struct Vector
 	const static Vector down;
 
 	void log() const;
+	void toInt();
 };
 
 struct Matrix
