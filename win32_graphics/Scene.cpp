@@ -177,12 +177,11 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 	int countOfTriangles = obj.getTriangleCount();
 	for (int i = 0; i < countOfTriangles; ++i)
 	{
-		//backface culling
 		Vertex* v1 = vertexBuffer + obj.getIndexAt(3 * i);
 		Vertex* v2 = vertexBuffer + obj.getIndexAt(3 * i + 1);
 		Vertex* v3 = vertexBuffer + obj.getIndexAt(3 * i + 2);
-		//if (isAllBackface(*v1, *v2, *v3)) continue;
-		if (isBackface(*v1, *v2, *v3)) continue;
+		//backface culling
+		if (isBackface(v1, v2, v3)) continue;
 
 		//start clipping
 		Vertex output[6]; // max count == 6 && min count == 3
@@ -284,7 +283,6 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		FillData data;
 		scanTriangle(&data, pos1, pos2, pos3);
 		if (data.fragmentsCount == 0) return 0;
-		
 		if(data.fragmentsCount > fragmentsSize)
 		{
 			resizeFragments(data.fragmentsCount);
@@ -331,15 +329,6 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			//Depth interpolation
 			//z is not linear but 1/z is linear!
 			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
-			if (allFragments[i].depth < 0)
-			{
-				print("------------------------");
-				print("x:%d|y:%d", allFragments[i].x, allFragments[i].y);
-				interp.log();
-				pos1.log();
-				pos2.log();
-				pos3.log();
-			}
 
 			//Texture Coord interpolation
 			if (camera->getIsOrthProjection())

@@ -338,18 +338,13 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 }
 
 //see http://en.wikipedia.org/wiki/Back-face_culling
-bool isBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3)
+bool isBackface(const Vertex* v1, const Vertex* v2, const Vertex* v3)
 {
-	Vector n = (v2.position - v1.position).crossProduct(v3.position - v1.position);
+	Vector n = (v1->eye - v2->eye).crossProduct(v1->eye - v3->eye);
 	// v1 already in camera space
-	return v1.eye.dotProduct(n) > 0;
+	return v1->eye.dotProduct(n) > 0;
 }
-bool isAllBackface(const Vertex& v1, const Vertex& v2, const Vertex& v3)
-{
-	Vector n = (v2.position - v1.position).crossProduct(v3.position - v1.position);
-	// v1 already in camera space
-	return v1.eye.dotProduct(n) > 0 && v2.eye.dotProduct(n) > 0 && v3.eye.dotProduct(n) > 0;
-}
+
 ///////
 //Draw line agorithms (not contain start and end)
 int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* end)
