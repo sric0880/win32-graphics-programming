@@ -127,6 +127,12 @@ void Scene::update(float deltaTime)
 
 void Scene::render(RECT rect)
 {
+	if (!allFragments)
+	{
+		allFragments = (Fragment*)malloc(sizeof(Fragment)*fragmentsSize);
+		if (!allFragments) return;
+	}
+
 	int w = rect.right - rect.left;
 	int h = rect.bottom - rect.top;
 	camera->setViewPortWidth(w);
@@ -158,7 +164,7 @@ void Scene::render(RECT rect)
 
 // draw buffer contains position, normal, color, texcoord that can put into triangles using index
 void Scene::render(const GameObject& obj) //gameobject must be const
-{
+{		
 	int vertexCount = obj.getVertexCount();
 	if (!vertexBuffer)
 	{
@@ -166,14 +172,14 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 		vertexBufferSize = vertexCount;
 	}else if (vertexBufferSize < vertexCount)
 	{
-		resizeVertexBuffer(vertexCount);
-		if (vertexBufferSize == 0) return;
+		if (!resizeVertexBuffer(vertexCount)) return;
 	}
 	for (int i = 0; i < vertexCount; ++i)
 	{
 		processVertex(obj.getVertexAt(i), vertexBuffer + i);
 	}
 	int countOfTriangles = obj.getTriangleCount();
+
 	for (int i = 0; i < countOfTriangles; ++i)
 	{
 		Vertex* v1 = vertexBuffer + obj.getIndexAt(3 * i);
@@ -236,12 +242,6 @@ void Scene::processVertex(const Vertex* input, Vertex* output)
 
 int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 {
-	if (!allFragments)
-	{
-		allFragments = (Fragment*)malloc(sizeof(Fragment)*fragmentsSize);
-		if (!allFragments) return 0;
-	}
-
 	// transform to view port
 	Vector pos1 = camera->getViewportMatrix() * v1.position;
 	Vector pos2 = camera->getViewportMatrix() * v2.position;
@@ -256,8 +256,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		count += 3; // for safe
 		if (count > fragmentsSize)
 		{
-			resizeFragments(count);
-			if (fragmentsSize == 0) return 0;
+			if(!resizeFragments(count)) return 0;
 		}
 		allFragments[0].x = pos1.x;
 		allFragments[0].y = pos1.y;
@@ -270,7 +269,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		c+= drawLineBresenham(allFragments+c, &allFragments[0], &allFragments[1]);
 		c+= drawLineBresenham(allFragments+c, &allFragments[1], &allFragments[2]);
 		c+= drawLineBresenham(allFragments+c, &allFragments[0], &allFragments[2]);
-		//set all the line color to black
+		//set all the line color to white 
 		for (int i = 0; i < c; ++i)
 		{
 			allFragments[i].color.x = 1;
@@ -290,8 +289,7 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		if (data.fragmentsCount == 0) return 0;
 		if(data.fragmentsCount > fragmentsSize)
 		{
-			resizeFragments(data.fragmentsCount);
-			if (fragmentsSize == 0) return 0;
+			if (!resizeFragments(data.fragmentsCount)) return 0;
 		}
 		int c = 0;
 		for(auto line : data.lines)
@@ -336,15 +334,6 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			
 			//Depth interpolation
 			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
-			if (allFragments[i].depth < 0)
-			{
-				print("-----------------");
-				interp.log();
-				print("fragment:%d of %d, x:%d, y:%d, depth: %f", i, c, allFragments[i].x, allFragments[i].y, allFragments[i].depth);
-				pos1.log();
-				pos2.log();
-				pos3.log();
-			}
 
 			//Texture Coord interpolation
 			if (camera->getIsOrthProjection())
@@ -397,8 +386,6 @@ void Scene::depthTest(int size)
 		auto& frame = allFragments[i];
 		int index_ = bufferIndex(frame.x, frame.y, screenWidth);
 		int index = 3*index_;
-		if (index + 2>= s || index_ >= depthbufferSize)
-			print("%d<%d, %d<%d", index_, depthbufferSize, index, s);
 		if (isDrawline) //not need test depth
 		{
 			//update to frame buffer
@@ -418,30 +405,32 @@ void Scene::depthTest(int size)
 	}
 }
 
-void Scene::resizeFragments(int size)
+bool Scene::resizeFragments(int size)
 {
 	auto temp = (Fragment*)realloc(allFragments, sizeof(Fragment)*size);
-	if (temp) allFragments = temp;
+	if (temp)
+	{
+		allFragments = temp;
+		fragmentsSize = size;
+		return true;
+	}
 	else
 	{
-		free(allFragments);
-		fragmentsSize = 0;
-		allFragments = nullptr;
-		return;
+		return false;
 	}
-	fragmentsSize = size;
 }
-void Scene::resizeVertexBuffer(int size)
+bool Scene::resizeVertexBuffer(int size)
 {
 	auto temp = (Vertex*)realloc(vertexBuffer, sizeof(Vertex)* size);
-	if (temp) vertexBuffer = temp;
-	else
+	if (temp)
 	{
-		free(vertexBuffer);
-		vertexBufferSize = 0;
-		vertexBuffer = nullptr;
+		vertexBuffer = temp;
+		vertexBufferSize = size;
+		return true;
 	}
-	vertexBufferSize = size;
+	else {
+		return false;
+	}
 }
 
 void Scene::onDraw(HDC hdc)
@@ -494,8 +483,8 @@ void Scene::releaseFrameBuffer()
 {
 	if (!isFirstDraw)
 	{
-		DeleteDC(mdc);
 		DeleteObject(bitmap);
+		DeleteDC(mdc);
 	}
 }
 void Scene::releaseDepthBuffer()

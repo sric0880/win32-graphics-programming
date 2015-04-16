@@ -12,6 +12,10 @@ inline void clippingTriangle_constructBitSet(const Vector& position, std::bitset
 	if (position.x < position.w) code[1] = 1;		//right
 	if (position.y < position.w) code[2] = 1;		//up
 	if (position.y > -position.w) code[3] = 1;	//down
+	if (position.w == 0)
+	{
+		position.w == -0.00001f; // I'am not sure it works.
+	}
 	if (position.w > 0)
 	{
 		code[4] = 1;
@@ -20,10 +24,6 @@ inline void clippingTriangle_constructBitSet(const Vector& position, std::bitset
 	{
 		if (position.z > -position.w) code[4] = 1;	//near
 		if (position.z < position.w) code[5] = 1;		//far
-	}
-	else
-	{
-		assert(0);
 	}
 }
 
@@ -112,6 +112,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 	l.push_front(n1);
 	if (a1.at(2)) // if up
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -148,6 +149,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 
 	if (a1.at(3)) // if down
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -185,6 +187,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 
 	if (a1.at(0)) // if left
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -222,6 +225,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 
 	if (a1.at(1)) // if right
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -257,6 +261,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 
 	if (a1.at(5)) // if back
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -294,6 +299,7 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 
 	if (a1.at(4)) // if front
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -377,6 +383,7 @@ int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, 
 	l.push_front(n1);
 	if (a1.at(2)) // if up
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -411,6 +418,7 @@ int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, 
 
 	if (a1.at(3)) // if down
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -446,6 +454,7 @@ int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, 
 
 	if (a1.at(4)) // if front
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -481,6 +490,7 @@ int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, 
 
 	if (a1.at(5)) // if back
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -516,6 +526,7 @@ int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, 
 
 	if (a1.at(0)) // if left
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{
@@ -551,6 +562,7 @@ int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, 
 
 	if (a1.at(1)) // if right
 	{
+		if (l.size() == 0) return 0;
 		auto iter = l.begin();
 		while (1)
 		{

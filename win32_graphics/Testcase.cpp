@@ -14,8 +14,8 @@ GameObject Sphere();
 
 void configCamera(Camera* camera)
 {
-	camera->setIsOrthProjection(true);
-	//camera->setIsOrthProjection(false);
+	//camera->setIsOrthProjection(true);
+	camera->setIsOrthProjection(false);
 	camera->setFarClippingPlane(1000);
 	camera->setNearClippingPlane(0.3f);
 	camera->setFieldOfView(60);

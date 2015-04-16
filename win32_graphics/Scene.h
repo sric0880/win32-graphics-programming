@@ -38,7 +38,7 @@ private:
 	Matrix projModelViewMatrix;
 	Matrix modelViewMatrix;
 
-	Vertex clippedVertex[6]; // max count == 6 && min count == 3
+	Vertex clippedVertex[12]; // absolutely not more than 12
 
 	//cache all vertexs in a gameobject
 	Vertex* vertexBuffer;
@@ -75,8 +75,8 @@ private:
 	void depthTest(int size);
 
 	void render(const GameObject& obj);
-	void resizeFragments(int size);
-	void resizeVertexBuffer(int size);
+	bool resizeFragments(int size);
+	bool resizeVertexBuffer(int size);
 
 	void initFrameBuffer(HDC hdc);
 	void initDepthBuffer();

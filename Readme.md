@@ -39,3 +39,4 @@
 7. [Fixed] Interpolated fragment out of triangle.
 8. [Fixed] Clipping triangle while orth projection.
 9. [Fixed] Buffer overflow.
+10. [Fixed] Clipping triangle come out more than 6 points.
