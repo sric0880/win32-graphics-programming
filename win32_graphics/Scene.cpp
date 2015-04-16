@@ -11,7 +11,7 @@ Scene::Scene():
 	allFragments(nullptr),
 	vertexBuffer(nullptr),
 	vertexBufferSize(1000),
-	fragmentsSize(1000),
+	fragmentsSize(10000),
 	frameBuffer(nullptr),
 	//bitmap(0),
 	depthBuffer(nullptr),
@@ -22,10 +22,8 @@ Scene::Scene():
 	actualFps(60),
 	isFirstDraw(true)
 {
-	//screenWidth = GetSystemMetrics(SM_CXSCREEN);
-	//screenHeight = GetSystemMetrics(SM_CYSCREEN);
-	screenWidth = 2560;
-	screenHeight = 1600;
+	screenWidth = GetSystemMetrics(SM_CXSCREEN);
+	screenHeight = GetSystemMetrics(SM_CYSCREEN);
 	depthbufferSize = screenWidth * screenHeight * sizeof(float);
 	initDepthBuffer();
 }
@@ -156,7 +154,6 @@ void Scene::render(RECT rect)
 #endif
 		render(ptr_object);
 	}
-
 }
 
 // draw buffer contains position, normal, color, texcoord that can put into triangles using index
@@ -186,12 +183,11 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 		if (isBackface(v1, v2, v3)) continue;
 
 		//start clipping
-		Vertex output[6]; // max count == 6 && min count == 3
-		int count = clippingTriangle(v1, v2, v3, output);
+		int count = clippingTriangle(v1, v2, v3, clippedVertex);
 		count -= 2;
 		for (int j = 0; j < count; ++j)
 		{
-			int size = generateFragment(output[0], output[j+1], output[j+2] );
+			int size = generateFragment(clippedVertex[0], clippedVertex[j+1], clippedVertex[j+2] );
 			processFragment(size, obj.getTexture2D());
 			depthTest(size);
 		}
@@ -315,7 +311,8 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 		for(int i = 0; i < c; ++i)
 		{
 			Vector interp = interpolationMatrix * Vector(allFragments[i].x, allFragments[i].y, 1);
-			if (c == 1 && (interp.x < 0 || interp.y < 0 || interp.z < 0))
+			clerp(0, 1, interp); //little error
+			if (c == 1)
 			{
 				interp.x = interp.y = interp.z = 1.0f/3.0f;
 			}
@@ -328,12 +325,11 @@ int Scene::generateFragment(const Vertex& v1, const Vertex& v2, const Vertex& v3
 			
 			//Depth interpolation
 			allFragments[i].depth = pos1.z * interp.x + pos2.z * interp.y + pos3.z * interp.z;
-			//assert(allFragments[i].depth >= 0);
 			if (allFragments[i].depth < 0)
 			{
 				print("-----------------");
 				interp.log();
-				print("fragment:%d of %d, x:%d, y:%d", i, c, allFragments[i].x, allFragments[i].y);
+				print("fragment:%d of %d, x:%d, y:%d, depth: %f", i, c, allFragments[i].x, allFragments[i].y, allFragments[i].depth);
 				pos1.log();
 				pos2.log();
 				pos3.log();
@@ -384,11 +380,14 @@ void Scene::processFragment(int size, const Texture2D* tex)
 
 void Scene::depthTest(int size)
 {
+	int s = 3 * screenWidth*screenHeight;
 	for (int i = 0; i < size; ++i)
 	{
 		auto& frame = allFragments[i];
 		int index_ = bufferIndex(frame.x, frame.y, screenWidth);
 		int index = 3*index_;
+		if (index + 2>= s || index_ >= depthbufferSize)
+			print("%d<%d, %d<%d", index_, depthbufferSize, index, s);
 		if (isDrawline) //not need test depth
 		{
 			//update to frame buffer

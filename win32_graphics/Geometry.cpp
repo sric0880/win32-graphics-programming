@@ -173,80 +173,6 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 
 	}
 
-	if (a1.at(4)) // if front
-	{
-		auto iter = l.begin();
-		while (1)
-		{
-			auto cur = iter++;
-			if (iter == l.end()) iter = l.begin(); //cycle
-
-			if ((cur->code ^ iter->code).at(4))
-			{
-				float z = cur->pos.z + cur->pos.w;
-				float w = z / (z - (iter->pos.z + iter->pos.w));
-				Node n;
-				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
-				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
-				n.pos.w = (1 - w)*cur->pos.w + w * iter->pos.w;
-				n.pos.z = -n.pos.w;
-				clippingTriangle_constructBitSet(n.pos, n.code);
-				n.weight = (1 - w) * cur->weight + w * iter->weight;
-				if (iter != l.begin())
-					l.insert(iter, n);
-				else
-					l.insert(l.end(), n);
-			}
-
-			if (iter == l.begin()) break;
-		}
-
-		//delete node where is front of box
-		for (iter = l.begin(); iter != l.end();)
-		{
-			if (iter->code.at(4)) iter = l.erase(iter);
-			else ++iter;
-		}
-
-	}
-
-	if (a1.at(5)) // if back
-	{
-		auto iter = l.begin();
-		while (1)
-		{
-			auto cur = iter++;
-			if (iter == l.end()) iter = l.begin(); //cycle
-
-			if ((cur->code ^ iter->code).at(5))
-			{
-				float z = cur->pos.z - cur->pos.w;
-				float w = z / (z - (iter->pos.z - iter->pos.w));
-				Node n;
-				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
-				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
-				n.pos.w = (1 - w)*cur->pos.w + w * iter->pos.w;
-				n.pos.z = n.pos.w;
-				clippingTriangle_constructBitSet(n.pos, n.code);
-				n.weight = (1 - w) * cur->weight + w * iter->weight;
-				if (iter != l.begin())
-					l.insert(iter, n);
-				else
-					l.insert(l.end(), n);
-			}
-
-			if (iter == l.begin()) break;
-		}
-
-		//delete node where is back of box
-		for (iter = l.begin(); iter != l.end();)
-		{
-			if (iter->code.at(5)) iter = l.erase(iter);
-			else ++iter;
-		}
-
-	}
-
 	if (a1.at(0)) // if left
 	{
 		auto iter = l.begin();
@@ -315,6 +241,79 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 		for (iter = l.begin(); iter != l.end();)
 		{
 			if (iter->code.at(1)) iter = l.erase(iter);
+			else ++iter;
+		}
+	}
+
+	if (a1.at(5)) // if back
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(5))
+			{
+				float z = cur->pos.z - cur->pos.w;
+				float w = z / (z - (iter->pos.z - iter->pos.w));
+				Node n;
+				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
+				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
+				n.pos.w = (1 - w)*cur->pos.w + w * iter->pos.w;
+				n.pos.z = n.pos.w;
+				clippingTriangle_constructBitSet(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+
+		//delete node where is back of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(5)) iter = l.erase(iter);
+			else ++iter;
+		}
+
+	}
+
+	if (a1.at(4)) // if front
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(4))
+			{
+				float z = cur->pos.z + cur->pos.w;
+				float w = z / (z - (iter->pos.z + iter->pos.w));
+				Node n;
+				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
+				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
+				n.pos.w = (1 - w)*cur->pos.w + w * iter->pos.w;
+				n.pos.z = -n.pos.w;
+				clippingTriangle_constructBitSet(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+
+		//delete node where is front of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(4)) iter = l.erase(iter);
 			else ++iter;
 		}
 	}

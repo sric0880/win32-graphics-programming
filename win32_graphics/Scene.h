@@ -38,6 +38,8 @@ private:
 	Matrix projModelViewMatrix;
 	Matrix modelViewMatrix;
 
+	Vertex clippedVertex[6]; // max count == 6 && min count == 3
+
 	//cache all vertexs in a gameobject
 	Vertex* vertexBuffer;
 	int vertexBufferSize;

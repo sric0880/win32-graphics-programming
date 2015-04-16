@@ -37,4 +37,5 @@
 5. Blink while scaling window or moving window.
 6. [Fixed] Back face culling error.
 7. [Fixed] Interpolated fragment out of triangle.
-8  Clipping triangle while orth projection.
+8. Clipping triangle while orth projection.
+9. [Fixed] Buffer overflow.
