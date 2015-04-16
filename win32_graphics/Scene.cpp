@@ -179,11 +179,22 @@ void Scene::render(const GameObject& obj) //gameobject must be const
 		Vertex* v1 = vertexBuffer + obj.getIndexAt(3 * i);
 		Vertex* v2 = vertexBuffer + obj.getIndexAt(3 * i + 1);
 		Vertex* v3 = vertexBuffer + obj.getIndexAt(3 * i + 2);
-		//backface culling
-		if (isBackface(v1, v2, v3)) continue;
 
-		//start clipping
-		int count = clippingTriangle(v1, v2, v3, clippedVertex);
+		int count = 0;
+		if (camera->getIsOrthProjection())
+		{
+			//backface culling
+			if (isBackface_Orth(v1, v2, v3)) continue;
+			//start clipping
+			count = clippingTriangle_Orth(v1, v2, v3, clippedVertex);
+		}
+		else
+		{
+			//backface culling
+			if (isBackface(v1, v2, v3)) continue;
+			//start clipping
+			count = clippingTriangle(v1, v2, v3, clippedVertex);
+		}
 		count -= 2;
 		for (int j = 0; j < count; ++j)
 		{

@@ -27,6 +27,16 @@ inline void clippingTriangle_constructBitSet(const Vector& position, std::bitset
 	}
 }
 
+inline void clippingTriangle_constructBitSet_Orth(const Vector& position, std::bitset<6> & code)
+{
+	if (position.x < -1) code[0] = 1;	//left
+	if (position.x > 1) code[1] = 1;		//right
+	if (position.y > 1) code[2] = 1;		//up
+	if (position.y < -1) code[3] = 1;	//down
+	if (position.z < -1) code[4] = 1;	//near
+	if (position.z > 1) code[5] = 1;		//far
+}
+
 //void clippingTriangle_(std::bitset<6>& code1, std::bitset<6>& code2, const Vertex* v1, const Vertex* v2, Vertex* out, int& c)
 //{
 //	if ( code1.none() ) { //inside box
@@ -336,6 +346,255 @@ int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Verte
 	return c;
 }
 
+int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, Vertex* out)
+{
+	Node n1,n2,n3;
+	clippingTriangle_constructBitSet_Orth(v1->position, n1.code);
+	clippingTriangle_constructBitSet_Orth(v2->position, n2.code);
+	clippingTriangle_constructBitSet_Orth(v3->position, n3.code);
+	//test
+	auto a1 = n1.code | n2.code | n3.code;
+	if (a1.none()) //all in box
+	{
+		out[0] = *v1;
+		out[1] = *v2;
+		out[2] = *v3;
+		return 3;
+	}
+	auto a2 = n1.code & n2.code & n3.code;
+	if (a2 != 0) return 0; //all out of box
+
+	n1.weight = { 1, 0, 0 };
+	n2.weight = { 0, 1, 0 };
+	n3.weight = { 0, 0, 1 };
+	n1.pos = v1->position;
+	n2.pos = v2->position;
+	n3.pos = v3->position;
+
+	std::list<Node> l;
+	l.push_front(n3);
+	l.push_front(n2);
+	l.push_front(n1);
+	if (a1.at(2)) // if up
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(2))
+			{
+				float w = (1 - cur->pos.y) / (iter->pos.y - cur->pos.y);
+				Node n;
+				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
+				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
+				n.pos.y = 1;
+				clippingTriangle_constructBitSet_Orth(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+
+		//delete node where is up of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(2)) iter = l.erase(iter);
+			else ++iter;
+		}
+	}
+
+	if (a1.at(3)) // if down
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(3))
+			{
+				float w = (-1 - cur->pos.y) / (iter->pos.y - cur->pos.y);
+				Node n;
+				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
+				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
+				n.pos.y = -1;
+				clippingTriangle_constructBitSet_Orth(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+
+		//delete node where is down of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(3)) iter = l.erase(iter);
+			else ++iter;
+		}
+
+	}
+
+	if (a1.at(4)) // if front
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(4))
+			{
+				float w = (-1 - cur->pos.z) / (iter->pos.z - cur->pos.z);
+				Node n;
+				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
+				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
+				n.pos.z = -1;
+				clippingTriangle_constructBitSet_Orth(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+
+		//delete node where is front of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(4)) iter = l.erase(iter);
+			else ++iter;
+		}
+
+	}
+
+	if (a1.at(5)) // if back
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(5))
+			{
+				float w = (1 - cur->pos.z) / (iter->pos.z - cur->pos.z);
+				Node n;
+				n.pos.x = (1 - w)*cur->pos.x + w * iter->pos.x;
+				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
+				n.pos.z = 1;
+				clippingTriangle_constructBitSet_Orth(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+
+		//delete node where is back of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(5)) iter = l.erase(iter);
+			else ++iter;
+		}
+
+	}
+
+	if (a1.at(0)) // if left
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(0))
+			{
+				float w = (-1 - cur->pos.x) / (iter->pos.x - cur->pos.x);
+				Node n;
+				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
+				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
+				n.pos.x = -1;
+				clippingTriangle_constructBitSet_Orth(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+
+		//delete node where is left of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(0)) iter = l.erase(iter);
+			else ++iter;
+		}
+
+	}
+
+	if (a1.at(1)) // if right
+	{
+		auto iter = l.begin();
+		while (1)
+		{
+			auto cur = iter++;
+			if (iter == l.end()) iter = l.begin(); //cycle
+
+			if ((cur->code ^ iter->code).at(1))
+			{
+				float w = (1 - cur->pos.x) / (iter->pos.x - cur->pos.x);
+				Node n;
+				n.pos.y = (1 - w)*cur->pos.y + w * iter->pos.y;
+				n.pos.z = (1 - w)*cur->pos.z + w * iter->pos.z;
+				n.pos.x = 1;
+				clippingTriangle_constructBitSet_Orth(n.pos, n.code);
+				n.weight = (1 - w) * cur->weight + w * iter->weight;
+				if (iter != l.begin())
+					l.insert(iter, n);
+				else
+					l.insert(l.end(), n);
+			}
+
+			if (iter == l.begin()) break;
+		}
+		//delete node where is right of box
+		for (iter = l.begin(); iter != l.end();)
+		{
+			if (iter->code.at(1)) iter = l.erase(iter);
+			else ++iter;
+		}
+	}
+
+	int c = 0;
+	for (auto iter = l.begin(); iter != l.end(); ++iter)
+	{
+		out[c].position = iter->pos;
+		out[c].color = v1->color * iter->weight.x + v2->color * iter->weight.y + v3->color * iter->weight.z;
+		out[c].normal = v1->normal * iter->weight.x + v2->normal * iter->weight.y + v3->normal * iter->weight.z;
+		out[c].texCoord = v1->texCoord * iter->weight.x + v2->texCoord * iter->weight.y + v3->texCoord * iter->weight.z;
+		out[c].eye = v1->eye * iter->weight.x + v2->eye * iter->weight.y + v3->eye * iter->weight.z;
+		++c;
+	}
+	return c;
+}
+
 //see http://en.wikipedia.org/wiki/Back-face_culling
 bool isBackface(const Vertex* v1, const Vertex* v2, const Vertex* v3)
 {
@@ -344,6 +603,11 @@ bool isBackface(const Vertex* v1, const Vertex* v2, const Vertex* v3)
 	return v1->eye.dotProduct(n) > 0;
 }
 
+bool isBackface_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3)
+{
+	Vector n = (v1->eye - v2->eye).crossProduct(v1->eye - v3->eye);
+	return Vector::backward.dotProduct(n) > 0;
+}
 ///////
 //Draw line agorithms (not contain start and end)
 int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* end)

@@ -21,9 +21,10 @@ struct FillData
 // out -- output vertexs 
 // return output vertexs count
 int clippingTriangle(const Vertex* v1, const Vertex* v2, const Vertex* v3, Vertex* out);
-
+int clippingTriangle_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3, Vertex* out);
 // back face culling
 bool isBackface(const Vertex* v1, const Vertex* v2, const Vertex* v3);
+bool isBackface_Orth(const Vertex* v1, const Vertex* v2, const Vertex* v3);
 
 // draw line using bresenham algorithm
 int drawLineBresenham(Fragment* buffer, const Fragment* start, const Fragment* end);
